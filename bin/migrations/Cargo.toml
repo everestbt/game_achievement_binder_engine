@@ -2,7 +2,7 @@
 name = "migrations"
 version = "0.0.0"
 edition = "2024"
-description = "The migrations for the database of steam randomiser"
+description = "The migrations for the database of G.A.B.E."
 
 [dependencies]
 serde.workspace = true
@@ -15,4 +15,4 @@ directories.workspace = true
 
 [[bin]]
 path = "src/main.rs"
-name = "steam-rand-migrations"
+name = "gabe-migrations"

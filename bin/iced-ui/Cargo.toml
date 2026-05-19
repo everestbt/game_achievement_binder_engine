@@ -2,7 +2,7 @@
 name = "iced-ui"
 version = "0.0.0"
 edition = "2021"
-description = "The updated UI for steam random"
+description = "The UI for G.A.B.E."
 
 [dependencies]
 api.workspace=true
@@ -19,4 +19,4 @@ simple-error.workspace = true
 
 [[bin]]
 path = "src/main.rs"
-name = "steam-rand-iced-ui"
+name = "gabe-ui"

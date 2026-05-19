@@ -18,7 +18,7 @@ STEAM_API_KEY=<KEY> steam-rand --help
 UI:
 ```bash
 cargo install --path ./bin/iced-ui
-STEAM_API_KEY=<KEY> steam-rand-iced-ui
+STEAM_API_KEY=<KEY> gabe-ui
 ```
 
 Replacing `<KEY> <STEAM-ID>` with your own credentials. 

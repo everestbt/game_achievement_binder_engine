@@ -2,7 +2,7 @@
 name = "cli"
 version = "0.0.0"
 edition = "2021"
-description = "The CLI for steam random"
+description = "The CLI for G.A.B.E."
 
 [dependencies]
 api.workspace=true
@@ -16,4 +16,4 @@ chrono.workspace = true
 
 [[bin]]
 path = "src/main.rs"
-name = "steam-rand"
+name = "gabe-cli"
