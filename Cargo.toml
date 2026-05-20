@@ -11,7 +11,7 @@ resolver = "2"
 # local crates - bin
 cli = {path = "./bin/cli", version = "0.0.0"}
 migrations = {path = "./bin/migrations", version = "0.0.0"}
-iced-ui = {path = "./bin/ui", version = "0.0.0"}
+ui = {path = "./bin/ui", version = "0.0.0"}
 # local crates - libs
 api = {path = "./lib/api", version = "0.0.0"}
 db = {path = "./lib/db", version = "0.0.0"}

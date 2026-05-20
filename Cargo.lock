@@ -1945,23 +1945,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "iced-ui"
-version = "0.0.0"
-dependencies = [
- "api",
- "bytes",
- "color-eyre",
- "db",
- "goals_lib",
- "iced",
- "rand 0.10.1",
- "rayon",
- "reqwest",
- "simple-error",
- "tokio",
-]
-
-[[package]]
 name = "iced_core"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4911,6 +4894,23 @@ dependencies = [
  "memoffset",
  "tempfile",
  "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "ui"
+version = "0.0.0"
+dependencies = [
+ "api",
+ "bytes",
+ "color-eyre",
+ "db",
+ "goals_lib",
+ "iced",
+ "rand 0.10.1",
+ "rayon",
+ "reqwest",
+ "simple-error",
+ "tokio",
 ]
 
 [[package]]
