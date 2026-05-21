@@ -1,11 +1,11 @@
 use super::App;
 
-use crate::{Message, OWNED_GAMES};
+use crate::{View, Message, OWNED_GAMES};
 
 use api::game_cover_fetch;
 use iced::{Element};
 use iced::widget::{
-    column, row, text, image, image::Handle, grid, scrollable, center_x, button
+    column, row, text, image, image::Handle, grid, scrollable, center_x, button, progress_bar
 };
 use db::{
     game_completion_cache,
@@ -13,6 +13,7 @@ use db::{
 };
 use std::collections::{HashMap, HashSet};
 use rayon::prelude::*;
+
 
 impl App {
     pub fn trophy_case_view(&self) -> Element<'_, Message> {
@@ -22,7 +23,16 @@ impl App {
                 button("Perfected").on_press(Message::TrophyCaseView(TrophyCaseFilter::Perfected)),
             ]
         };
-        if let Some(trophies) = &self.trophies {
+
+        let filter = match &self.view {
+            View::TrophyCase(filter) => filter,
+            _ => unreachable!("Should only be call when in trophy case view")
+        };
+
+        if let Some(trophies) = self.trophies.get(&filter) {
+            let game_progress = progress_bar(0.0..=OWNED_GAMES.len() as f32, trophies.len() as f32);
+
+            // Grid of game trophies
             let panes = trophies.iter().map(|app_id| {
                 if let Some(i) =  self.game_covers.get(app_id) {
                     image(i).width(150).height(225).into()
@@ -36,6 +46,7 @@ impl App {
             });
             column![
                 center_x(filter_games),
+                center_x(game_progress),
                 scrollable(grid(panes).columns(10).spacing(10))
             ].into()
         }
@@ -45,20 +56,20 @@ impl App {
     }
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Eq, Hash, PartialEq)]
 pub enum TrophyCaseFilter {
     #[default]
     Completed,
     Perfected,
 }
 
-pub async fn load_trophies(view: TrophyCaseFilter) -> Vec<i32> {
+pub async fn load_trophies(view: TrophyCaseFilter) -> (TrophyCaseFilter, Vec<i32>) {
     let target_set: HashSet<i32> = game_target_store::get_game_targets().expect("Failed to load targets")
         .iter()
         .filter(|t| !t.complete)
         .map(|t| t.app_id)
         .collect();
-    game_completion_cache::get_game_completion()
+    (view.clone(), game_completion_cache::get_game_completion()
         .expect("Failed to load cache")
         .iter()
         .filter(|c| {
@@ -68,7 +79,7 @@ pub async fn load_trophies(view: TrophyCaseFilter) -> Vec<i32> {
             }
         }) 
         .map(|c| c.app_id)
-        .collect()
+        .collect())
 }
 
 pub async fn load_game_covers(app_ids: Vec<i32>) -> HashMap<i32, Handle> {

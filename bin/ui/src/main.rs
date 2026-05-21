@@ -66,7 +66,7 @@ enum Message {
     RandomGame,
     ExcludeAchievement(i32, String), // app_id, achievement_name
     TrophyCaseView(TrophyCaseFilter),
-    TrophiesLoaded(Vec<i32>), // app_id's
+    TrophiesLoaded((TrophyCaseFilter, Vec<i32>)), // app_id's
     GameCoversLoaded(HashMap<i32, Handle>), // app_id -> Game Cover
     CachesSynced(Result<(), SimpleError>),
     GameListSearch(String),
@@ -79,7 +79,7 @@ enum View {
     Goals,
     Games(GameListFilter),
     Game(i32), // app_id
-    TrophyCase,
+    TrophyCase(TrophyCaseFilter),
 }
 
 #[derive(Debug, Clone)]
@@ -98,7 +98,7 @@ struct App {
     goals: Option<Vec<Goal>>,
     game_views: HashMap<i32, GameDisplay>,
     goal_icons: HashMap<(i32, String), Handle>, // app_id, achievement_name -> image
-    trophies: Option<Vec<i32>>,
+    trophies: HashMap<TrophyCaseFilter, Vec<i32>>,
     game_covers: HashMap<i32, Handle>, // app_id -> image
     // DATA
     credentials: Credentials,
@@ -117,7 +117,7 @@ impl App {
             game_views: HashMap::new(),
             goal_icons: HashMap::new(),
             game_covers: HashMap::new(),
-            trophies: None,
+            trophies: HashMap::new(),
             credentials,
         }
     }
@@ -223,14 +223,14 @@ impl App {
                 Task::batch(tasks)
             },
             Message::TrophyCaseView(filter) => {
-                self.view = View::TrophyCase;
+                self.view = View::TrophyCase(filter.clone());
                 Task::perform(trophy_case_view::load_trophies(filter), Message::TrophiesLoaded)
             },
-            Message::TrophiesLoaded(trophies) => {
+            Message::TrophiesLoaded((filter, trophies)) => {
                 let filtered_covers: Vec<i32> = trophies.iter()
                     .filter(|app_id| !self.game_covers.contains_key(app_id)).copied()
                     .collect();
-                self.trophies = Some(trophies);
+                self.trophies.insert(filter, trophies);
                 if filtered_covers.is_empty() {
                     Task::none()
                 }
@@ -252,7 +252,7 @@ impl App {
                 for k in self.games.keys() {
                     tasks.push(Task::perform(GameListDisplay::list(k.1, k.0.clone(), Some(self.game_list_search.clone())), Message::GamesLoaded));
                 }
-                self.trophies = None;
+                self.trophies = HashMap::new();
                 Task::batch(tasks)
             },
             Message::GameListSearch(search) => {
@@ -282,7 +282,7 @@ impl App {
             View::Goals => self.goal_view(),
             View::Games(filter) => self.game_list_view(filter.clone()),
             View::Game(_) => self.game_view(),
-            View::TrophyCase => self.trophy_case_view(),
+            View::TrophyCase(_) => self.trophy_case_view(),
         };
 
         column![
