@@ -111,7 +111,7 @@ impl App {
         Self {
             view: View::default(),
             games: HashMap::new(),
-            games_have_achievements_filter: true,
+            games_have_achievements_filter: false,
             game_list_search: "".to_string(),
             goals: None,
             game_views: HashMap::new(),
