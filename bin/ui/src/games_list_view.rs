@@ -2,20 +2,19 @@ use super::App;
 
 use crate::{Message, OWNED_GAMES};
 
+use goals_lib::goals;
 use iced::font;
 use iced::widget::{
     center_x, center_y, column, row, table, text, scrollable, button, checkbox, text_input
 };
 use iced::{Element, Font};
 use db::{
-    game_completion_cache,
-    game_completion_cache::GameCompletion,
     game_target_store,
 };
 use api::{
     game_fetch::Game,
 };
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::cmp::Reverse;
 use rayon::prelude::*;
 
@@ -46,11 +45,8 @@ pub struct GameListResult {
 
 impl GameListDisplay {
     pub async fn list(has_achievements: bool, filter: GameListFilter, title_search: Option<String>) -> GameListResult {
-        let completed_games_cache: HashMap<i32, GameCompletion> = game_completion_cache::get_game_completion()
-            .expect("Failed to load completed games")
-            .iter()
-            .map(|n| (n.app_id, n.clone()))
-            .collect();
+        let completed_games_cache = goals::get_game_completion();
+        let progress_cache = goals::get_game_progress();
         let target_set: HashSet<i32> = game_target_store::get_game_targets().expect("Failed to load targets")
             .iter()
             .filter(|t| !t.complete)
@@ -74,10 +70,10 @@ impl GameListDisplay {
                         target_set.contains(&g.appid)
                     }
                     GameListFilter::InProgress => {
-                        completed_games_cache.get(&g.appid).map(|c| c.complete).unwrap_or(0) < 100 || target_set.contains(&g.appid)
+                        !completed_games_cache.get(&g.appid).map(|c| c.complete).unwrap_or(false) || target_set.contains(&g.appid)
                     },
                     GameListFilter::Completed => {
-                        completed_games_cache.get(&g.appid).map(|c| c.complete).unwrap_or(0) == 100 && !target_set.contains(&g.appid)
+                        completed_games_cache.get(&g.appid).map(|c| c.complete).unwrap_or(false) && !target_set.contains(&g.appid)
                     },
                     GameListFilter::Perfected => {
                         completed_games_cache.get(&g.appid).map(|c| c.perfect).unwrap_or(false) && !target_set.contains(&g.appid)
@@ -86,13 +82,13 @@ impl GameListDisplay {
             })
             .filter(|g| {
                 if has_achievements {
-                    completed_games_cache.get(&g.appid).map(|c| c.has_achievements).unwrap_or(false)
+                    progress_cache.contains_key(&g.appid)
                 }
                 else {
                     true
                 }
             })
-            .map(|g| (g, completed_games_cache.get(&g.appid).map(|c| c.complete).unwrap_or(0))) // Game, Progress
+            .map(|g| (g, progress_cache.get(&g.appid).map(|p| p.get_progress()).unwrap_or(0))) // Game, Progress
             .collect();
         list.sort_by_key(|a| Reverse(a.1));
 

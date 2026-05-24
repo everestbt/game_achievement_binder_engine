@@ -8,6 +8,26 @@ pub struct ExcludedAchievement {
     pub app_id: i32,
 }
 
+pub fn get_excluded_achievements() -> Result<Vec<ExcludedAchievement>> {
+    let conn: Connection = db_manager::get_connection();
+    create_table(&conn)?;
+
+    let mut stmt = conn.prepare("SELECT id, achievement_name, app_id FROM excluded_steam_achievements")?;
+    let achieve_iter = stmt.query_map([], |row| {
+        Ok(ExcludedAchievement {
+            id: row.get(0)?,
+            achievement_name: row.get(1)?,
+            app_id: row.get(2)?,
+        })
+    })?;
+
+    let mut achievement_vec : Vec<ExcludedAchievement> = Vec::new();
+    for d in achieve_iter {
+        achievement_vec.push(d.unwrap());
+    }
+    Ok(achievement_vec)
+}
+
 pub fn get_excluded_achievements_for_app(app_id: &i32) -> Result<Vec<ExcludedAchievement>> {
     let conn: Connection = db_manager::get_connection();
     create_table(&conn)?;

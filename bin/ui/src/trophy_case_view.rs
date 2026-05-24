@@ -3,15 +3,12 @@ use super::App;
 use crate::{View, Message, OWNED_GAMES};
 
 use api::game_cover_fetch;
-use iced::{Element};
+use goals_lib::goals;
+use iced::Element;
 use iced::widget::{
     column, row, text, image, image::Handle, grid, scrollable, center_x, button, progress_bar
 };
-use db::{
-    game_completion_cache,
-    game_target_store,
-};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use rayon::prelude::*;
 
 
@@ -64,21 +61,15 @@ pub enum TrophyCaseFilter {
 }
 
 pub async fn load_trophies(view: TrophyCaseFilter) -> (TrophyCaseFilter, Vec<i32>) {
-    let target_set: HashSet<i32> = game_target_store::get_game_targets().expect("Failed to load targets")
-        .iter()
-        .filter(|t| !t.complete)
-        .map(|t| t.app_id)
-        .collect();
-    (view.clone(), game_completion_cache::get_game_completion()
-        .expect("Failed to load cache")
+    (view.clone(), goals::get_game_completion()
         .iter()
         .filter(|c| {
             match view {
-                TrophyCaseFilter::Completed => c.complete == 100 && !target_set.contains(&c.app_id),
-                TrophyCaseFilter::Perfected => c.perfect && !target_set.contains(&c.app_id),
+                TrophyCaseFilter::Completed => c.1.complete,
+                TrophyCaseFilter::Perfected => c.1.perfect,
             }
         }) 
-        .map(|c| c.app_id)
+        .map(|c| *c.0)
         .collect())
 }
 

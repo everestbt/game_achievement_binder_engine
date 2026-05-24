@@ -120,20 +120,17 @@ async fn main() -> Result<(), reqwest::Error> {
     else if args.goals {
         let credentials = get_credentials(&args);
         let owned_games: HashMap<i32, game_fetch::Game> = game_fetch::get_owned_games(&credentials.key, &credentials.steam_id).await.iter().map(|n| (n.appid, n.clone())).collect();
-        // Print all completed achievements!
-        let completed_achievement = goals::get_and_sync_completed_achievements(&credentials.key, &credentials.steam_id).await;
-        for ca in completed_achievement {
-            println!("Well done! You completed {game} : {name}", game = owned_games.get(&ca.app_id).expect("Achievement completed for unowned game?!?").name, name = ca.display_name);
-        }
+        // Refresh caches and get goals
+        goals::sync_caches(&credentials.key, &credentials.steam_id).await;
         let mut achievements: Vec<achievement_store::Achievement> = achievement_store::get_achievements().expect("Failed to load achievements");
         achievements.sort_by(|a, b| i32::cmp(&a.app_id,&b.app_id));
         
         for a in achievements {
             if a.description.is_none() {
-                println!("{game} : {name} [{id}]", name = a.display_name, game = owned_games.get(&a.app_id).expect("Achievement completed for unowned game?!?").name, id = a.id);
+                println!("{game} : {name} [{id}]", name = a.display_name, game = owned_games.get(&a.app_id).expect("Achievement goal for unowned game?!?").name, id = a.id);
             }
             else{
-                println!("{game} : {name} - {description} [{id}]", name = a.display_name, game = owned_games.get(&a.app_id).expect("Achievement completed for unowned game?!?").name, description = a.description.clone().unwrap(), id = a.id);
+                println!("{game} : {name} - {description} [{id}]", name = a.display_name, game = owned_games.get(&a.app_id).expect("Achievement goal for unowned game?!?").name, description = a.description.clone().unwrap(), id = a.id);
             }
         }
     }
@@ -148,23 +145,26 @@ async fn main() -> Result<(), reqwest::Error> {
         // Get full game list
         let credentials = get_credentials(&args);
         let games: Vec<game_fetch::Game> = game_fetch::get_owned_games(&credentials.key, &credentials.steam_id).await;
-        goals::refresh_game_completion_cache(&credentials.key, &credentials.steam_id, &games).await;
-        let completed_games: Vec<game_completion_cache::GameCompletion> = game_completion_cache::get_game_completion_above_or_equal(100).expect("Failed to load completed games");
+        goals::sync_caches(&credentials.key, &credentials.steam_id).await;
+        let completed_games = goals::get_game_completion();
         for g in completed_games {
-            let game = games.iter().find(|game| game.appid == g.app_id).unwrap();
-            println!("Completed game: {name}", name = game.name);
+            if g.1.complete {
+                let game = games.iter().find(|game| game.appid == g.0).unwrap();
+                println!("Completed game: {name}", name = game.name);
+            }
         }
     }
     else if args.game_completion_list {
         // Get full game list
         let credentials = get_credentials(&args);
         let games: Vec<game_fetch::Game> = game_fetch::get_owned_games(&credentials.key, &credentials.steam_id).await;
-        goals::refresh_game_completion_cache(&credentials.key, &credentials.steam_id, &games).await;
-        let progressed_games: Vec<game_completion_cache::GameCompletion> = game_completion_cache::get_game_completion_above_or_equal(1).expect("Failed to load completed games");
+        goals::sync_caches(&credentials.key, &credentials.steam_id).await;
+        let progressed_games = goals::get_game_completion();
+        let progress = goals::get_game_progress();
         for g in progressed_games {
-            if g.complete != 100 {
-                let game = games.iter().find(|game| game.appid == g.app_id).unwrap();
-                println!("{name} : {progress}", name = game.name, progress = g.complete);
+            if !g.1.complete {
+                let game = games.iter().find(|game| game.appid == g.0).unwrap();
+                println!("{name} : {progress}", name = game.name, progress = progress.get(&g.0).map(|p| p.get_progress()).unwrap_or(0));
             }
         }
     }

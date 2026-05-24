@@ -5,46 +5,80 @@ use db_lib::db_manager;
 #[derive(Clone)]
 pub struct GameCompletion {
     pub app_id: i32,
-    pub complete: i8,
+    pub achievements_completed: u32,
     pub last_played: i64,
-    pub has_achievements: bool,
-    pub perfect: bool,
+    pub achievement_count: u32,
 }
 
-pub fn get_game_completion() -> Result<Vec<GameCompletion>> {
+pub fn get_game_completion(app_id: &i32) -> Result<Option<GameCompletion>> {
     let conn: Connection = db_manager::get_connection();
     create_table(&conn)?;
 
-    let mut stmt = conn.prepare("SELECT app_id, complete, last_played, has_achievements, perfect FROM steam_game_completion")?;
+    let mut stmt = conn.prepare("SELECT app_id, achievements_completed, last_played, achievement_count FROM steam_game_completion WHERE app_id = ?1")?;
+    let mut achieve_iter = stmt.query_map([app_id], |row| {
+        Ok(GameCompletion {
+            app_id: row.get(0)?,
+            achievements_completed: row.get(1)?,
+            last_played: row.get(2)?,
+            achievement_count: row.get(3)?,
+        })
+    })?;
+    if let Some(found) = achieve_iter.next() {
+        if found.is_err() {
+            Err(found.err().unwrap())
+        }
+        else {
+            Ok(Some(found.unwrap()))
+        }
+    }
+    else {
+        Ok(None)
+    }
+}
+
+pub fn get_all_completions() -> Result<Vec<GameCompletion>> {
+    let conn: Connection = db_manager::get_connection();
+    create_table(&conn)?;
+
+    let mut stmt = conn.prepare("SELECT app_id, achievements_completed, last_played, achievement_count FROM steam_game_completion")?;
     let achieve_iter = stmt.query_map([], |row| {
         Ok(GameCompletion {
             app_id: row.get(0)?,
-            complete: row.get(1)?,
+            achievements_completed: row.get(1)?,
             last_played: row.get(2)?,
-            has_achievements: row.get(3)?,
-            perfect: row.get(4)?,
+            achievement_count: row.get(3)?,
         })
     })?;
-
     let mut vec : Vec<GameCompletion> = Vec::new();
-    for d in achieve_iter {
-        vec.push(d.unwrap());
+    let mut error = None;
+    for result in achieve_iter {
+        match result {
+            Ok(r) => vec.push(r),
+            Err(e) =>  {
+                error = Some(e);
+                break
+            },
+        }
     }
-    Ok(vec)
+    if let Some(e) = error {
+        Err(e)
+    }
+    else {
+        Ok(vec)
+    }
 }
 
-pub fn get_game_completion_above_or_equal(completed: i8) -> Result<Vec<GameCompletion>> {
+pub fn get_perfect_games() -> Result<Vec<GameCompletion>> {
     let conn: Connection = db_manager::get_connection();
     create_table(&conn)?;
 
-    let mut stmt = conn.prepare("SELECT app_id, complete, last_played, has_achievements, perfect FROM steam_game_completion WHERE complete >= ?1 AND has_achievements = true ORDER BY complete DESC")?;
-    let achieve_iter = stmt.query_map([completed], |row| {
+    let mut stmt = conn.prepare("SELECT app_id, achievements_completed, last_played, achievement_count FROM steam_game_completion WHERE achievements_completed = achievement_count")?;
+    let achieve_iter = stmt.query_map([], |row| {
         Ok(GameCompletion {
             app_id: row.get(0)?,
-            complete: row.get(1)?,
+            achievements_completed: row.get(1)?,
             last_played: row.get(2)?,
-            has_achievements: row.get(3)?,
-            perfect: row.get(4)?,
+            achievement_count: row.get(3)?,
         })
     })?;
 
@@ -55,15 +89,15 @@ pub fn get_game_completion_above_or_equal(completed: i8) -> Result<Vec<GameCompl
     Ok(vec)
 }
 
-pub fn save_game_completion(app_id: &i32, complete: i8, last_played: i64, has_achievements: bool, perfect: bool) -> Result<()> {
+pub fn save_game_completion(app_id: &i32, achievements_completed: u32, last_played: i64, achievement_count: u32) -> Result<()> {
     // Connect to SQLite database (creates the file if it doesn't exist)
     let conn: Connection = db_manager::get_connection();
     create_table(&conn)?;
     
     // Add in the achievement
     conn.execute(
-        "INSERT INTO steam_game_completion (app_id, complete, last_played, has_achievements, perfect) VALUES (?1, ?2, ?3, ?4, ?5) ON CONFLICT(app_id) DO UPDATE SET complete=?6, last_played=?7, has_achievements=?8, perfect=?9",
-        params![app_id, complete, last_played, has_achievements, perfect, complete, last_played, has_achievements, perfect],
+        "INSERT INTO steam_game_completion (app_id, achievements_completed, last_played, achievement_count) VALUES (?1, ?2, ?3, ?4) ON CONFLICT(app_id) DO UPDATE SET achievements_completed=?5, last_played=?6, achievement_count=?7",
+        params![app_id, achievements_completed, last_played, achievement_count, achievements_completed, last_played, achievement_count],
     )?;
 
     Ok(())
@@ -85,10 +119,9 @@ fn create_table(conn: &Connection) -> Result<()> {
     conn.execute(
         "CREATE TABLE IF NOT EXISTS steam_game_completion (
             app_id INTEGER PRIMARY KEY,
-            complete INTEGER NOT NULL,
+            achievements_completed INTEGER NOT NULL,
             last_played INTEGER NOT NULL,
-            has_achievements BOOL NOT NULL,
-            perfect BOOL NOT NULL
+            achievement_count INTEGER NOT NULL
         )",
         [], // No parameters needed
     )?;

@@ -34,7 +34,7 @@ pub static OWNED_GAMES: LazyLock<HashMap<i32, Game>> = LazyLock::new(|| {
         let steam_id = steam_id_store::get_id().expect("Failed to load steam-id, use the cli and supply a --id first");
         let runtime = tokio::runtime::Runtime::new().expect("Unable to create a runtime");
         // Sync and update all data
-        runtime.block_on(goals::get_and_sync_completed_achievements(&key, &steam_id));
+        runtime.block_on(goals::sync_caches(&key, &steam_id));
         let owned_games_vec = runtime.block_on(game_fetch::get_owned_games(&key, &steam_id));
         owned_games_vec.iter().map(|g| (g.appid, g.clone())).collect::<HashMap<_, _>>()
     }
@@ -301,8 +301,6 @@ fn load_credentials() -> Credentials {
 }
 
 async fn sync_caches(credentials: Credentials) -> Result<(), SimpleError> {
-    goals::get_and_sync_completed_achievements(&credentials.key, &credentials.steam_id).await;
-    let owned_games = OWNED_GAMES.values().cloned().collect();
-    goals::refresh_game_completion_cache(&credentials.key, &credentials.steam_id, &owned_games).await;
+    goals::sync_caches(&credentials.key, &credentials.steam_id).await;
     Ok(())
 }
