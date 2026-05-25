@@ -1,5 +1,11 @@
 use api::{achievement_fetch::{self, GameAchievement}, game_fetch, game_fetch::Game};
-use db::{achievement_store, excluded_achievement_store, game_completion_cache, game_target_store};
+use db::{
+    achievement_store, 
+    excluded_achievement_store, 
+    game_completion_cache, 
+    game_completion_cache::GameCompletion,
+    game_target_store
+};
 
 use std::{collections::{HashMap, HashSet}};
 use rand::prelude::*;
@@ -78,16 +84,12 @@ async fn sync_completed_achievements(key : &str, steam_id : &str) {
 async fn refresh_game_achievement_cache(key : &str, steam_id : &str) {
     let games = game_fetch::get_owned_games(key, steam_id).await;
     // Get cached completed games
-    let completed_games_cache: HashMap<i32, game_completion_cache::GameCompletion> = game_completion_cache::get_all_completions()
-        .expect("Failed to load completed games")
+    let cache_load = game_completion_cache::get_all_completions().expect("Failed to load completed games");
+    let completed_games_cache: HashMap<i32, &GameCompletion> = cache_load
         .iter()
-        .map(|n| (n.app_id, n.clone()))
+        .map(|n| (n.app_id.clone(), n))
         .collect();
     for game in games {
-        // Skip the game if no playtime
-        if game.playtime_forever == 0 {
-            continue;
-        }
         // Check if cached and not played since
         let cache_check = completed_games_cache.get(&game.appid);
         if cache_check.is_some_and(|c| c.last_played == game.last_played) {
