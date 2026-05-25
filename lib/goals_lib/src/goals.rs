@@ -96,7 +96,7 @@ async fn refresh_game_achievement_cache(key : &str, steam_id : &str) {
             continue;
         }
         // Get the achievements completed for that game
-        // When not present, the game has no achievements, so omit
+        // When not present, the game has no achievements, include with zeroes
         let player_achievements = achievement_fetch::get_player_achievements(key, steam_id, &game.appid).await;
         if let Some(achievements) = player_achievements.map(|p| p.achievements) {
             game_completion_cache::save_game_completion(
@@ -104,6 +104,13 @@ async fn refresh_game_achievement_cache(key : &str, steam_id : &str) {
                 achievements.iter().filter(|a| a.achieved==1).count() as u32, 
                 game.last_played, 
                 achievements.len() as u32).expect("Failed to save game completion");
+        }
+        else {
+            game_completion_cache::save_game_completion(
+                &game.appid, 
+                0, 
+                game.last_played, 
+                0).expect("Failed to save game completion");
         }
     }
 }

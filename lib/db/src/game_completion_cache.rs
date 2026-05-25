@@ -68,11 +68,13 @@ pub fn get_all_completions() -> Result<Vec<GameCompletion>> {
     }
 }
 
+// Returns all perfected games, which is where the achieved count equals the total count
+// It does not return those with zero achievements as these can not be perfected
 pub fn get_perfect_games() -> Result<Vec<GameCompletion>> {
     let conn: Connection = db_manager::get_connection();
     create_table(&conn)?;
 
-    let mut stmt = conn.prepare("SELECT app_id, achievements_completed, last_played, achievement_count FROM steam_game_completion WHERE achievements_completed = achievement_count")?;
+    let mut stmt = conn.prepare("SELECT app_id, achievements_completed, last_played, achievement_count FROM steam_game_completion WHERE achievements_completed = achievement_count AND achievement_count != 0")?;
     let achieve_iter = stmt.query_map([], |row| {
         Ok(GameCompletion {
             app_id: row.get(0)?,
