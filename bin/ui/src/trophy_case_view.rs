@@ -28,6 +28,19 @@ impl App {
 
         if let Some(trophies) = self.trophies.get(&filter) {
             let game_progress = progress_bar(0.0..=OWNED_GAMES.len() as f32, trophies.len() as f32);
+            let achievement_progress: Element<'_, Message> = if let Some(progress) = &self.achievement_progress {
+                match filter {
+                    TrophyCaseFilter::Completed => {
+                        progress_bar(0.0..=progress.total_achievements as f32, (progress.unlocked_achievements + progress.total_excluded) as f32).into()
+                    },
+                    TrophyCaseFilter::Perfected => {
+                        progress_bar(0.0..=progress.total_achievements as f32, (progress.unlocked_achievements) as f32).into()
+                    },
+                }
+            }
+            else {
+                text("Loading achievement progress").into()
+            };
 
             // Grid of game trophies
             let panes = trophies.iter().map(|app_id| {
@@ -44,6 +57,7 @@ impl App {
             column![
                 center_x(filter_games),
                 center_x(game_progress),
+                center_x(achievement_progress),
                 scrollable(grid(panes).columns(10).spacing(10))
             ].into()
         }
@@ -71,6 +85,29 @@ pub async fn load_trophies(view: TrophyCaseFilter) -> (TrophyCaseFilter, Vec<i32
         }) 
         .map(|c| *c.0)
         .collect())
+}
+
+#[derive(Debug, Clone)]
+pub struct TotalAchievementProgress {
+    pub total_achievements : u32,
+    pub unlocked_achievements: u32,
+    pub total_excluded: u32,
+}
+
+pub async fn load_achievement_progress() -> TotalAchievementProgress {
+    let mut total_achievements = 0;
+    let mut unlocked_achievements = 0;
+    let mut total_excluded = 0;
+    for g in goals::get_game_progress() {
+        total_achievements += g.1.total;
+        unlocked_achievements += g.1.unlocked;
+        total_excluded += g.1.excluded;
+    }
+    TotalAchievementProgress {
+        total_achievements,
+        unlocked_achievements,
+        total_excluded
+    }
 }
 
 pub async fn load_game_covers(app_ids: Vec<i32>) -> HashMap<i32, Handle> {

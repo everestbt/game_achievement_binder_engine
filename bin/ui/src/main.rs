@@ -26,7 +26,10 @@ use db::{
 use goals_lib::goals;
 use game_view::{GameDisplay, GameGoalDisplay};
 use api::achievement_fetch::GameAchievement;
-use trophy_case_view::TrophyCaseFilter;
+use trophy_case_view::{
+    TrophyCaseFilter, 
+    TotalAchievementProgress
+};
 
 // We only need to load this once, do it statically so it can be shared between all threads
 pub static OWNED_GAMES: LazyLock<HashMap<i32, Game>> = LazyLock::new(|| {
@@ -67,6 +70,7 @@ enum Message {
     ExcludeAchievement(i32, String), // app_id, achievement_name
     TrophyCaseView(TrophyCaseFilter),
     TrophiesLoaded((TrophyCaseFilter, Vec<i32>)), // app_id's
+    AchievementProgressLoaded(TotalAchievementProgress),
     GameCoversLoaded(HashMap<i32, Handle>), // app_id -> Game Cover
     CachesSynced(Result<(), SimpleError>),
     GameListSearch(String),
@@ -99,6 +103,7 @@ struct App {
     game_views: HashMap<i32, GameDisplay>,
     goal_icons: HashMap<(i32, String), Handle>, // app_id, achievement_name -> image
     trophies: HashMap<TrophyCaseFilter, Vec<i32>>,
+    achievement_progress: Option<TotalAchievementProgress>,
     game_covers: HashMap<i32, Handle>, // app_id -> image
     // DATA
     credentials: Credentials,
@@ -118,6 +123,7 @@ impl App {
             goal_icons: HashMap::new(),
             game_covers: HashMap::new(),
             trophies: HashMap::new(),
+            achievement_progress: None,
             credentials,
         }
     }
@@ -224,7 +230,11 @@ impl App {
             },
             Message::TrophyCaseView(filter) => {
                 self.view = View::TrophyCase(filter.clone());
-                Task::perform(trophy_case_view::load_trophies(filter), Message::TrophiesLoaded)
+                let tasks = vec![
+                    Task::perform(trophy_case_view::load_trophies(filter), Message::TrophiesLoaded),
+                    Task::perform(trophy_case_view::load_achievement_progress(), Message::AchievementProgressLoaded)
+                ];
+                Task::batch(tasks)
             },
             Message::TrophiesLoaded((filter, trophies)) => {
                 let filtered_covers: Vec<i32> = trophies.iter()
@@ -238,6 +248,10 @@ impl App {
                     Task::perform(trophy_case_view::load_game_covers(filtered_covers), Message::GameCoversLoaded)
                 }
             },
+            Message::AchievementProgressLoaded(progress) => {
+                self.achievement_progress = Some(progress);
+                Task::none()
+            }
             Message::GameCoversLoaded(cover_map) => {
                 for cover in cover_map {
                     self.game_covers.insert(cover.0, cover.1);
