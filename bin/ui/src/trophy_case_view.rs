@@ -27,14 +27,29 @@ impl App {
         };
 
         if let Some(trophies) = self.trophies.get(&filter) {
-            let game_progress = progress_bar(0.0..=OWNED_GAMES.len() as f32, trophies.len() as f32);
+            let game_progress: Element<'_, Message> = {
+                let percent_progress = 100.0 * trophies.len() as f32 / OWNED_GAMES.len() as f32;
+                column![
+                    center_x(text(format!("Game progress: {done}/{total} ({percent:.2}%)", done = trophies.len(), total = OWNED_GAMES.len(), percent = percent_progress))),
+                    center_x(progress_bar(0.0..=OWNED_GAMES.len() as f32, trophies.len() as f32)),
+                ].into()
+            };
             let achievement_progress: Element<'_, Message> = if let Some(progress) = &self.achievement_progress {
                 match filter {
-                    TrophyCaseFilter::Completed => {
-                        progress_bar(0.0..=progress.total_achievements as f32, (progress.unlocked_achievements + progress.total_excluded) as f32).into()
+                    TrophyCaseFilter::Completed => { 
+                        let unlocked_and_excluded = (progress.unlocked_achievements + progress.total_excluded) as f32;
+                        let percent_progress = 100.0 * unlocked_and_excluded / progress.total_achievements as f32;
+                        column![
+                            center_x(text(format!("Achievement progress: {done}/{total} ({percent:.2}%)", done = unlocked_and_excluded, total = progress.total_achievements, percent = percent_progress))),
+                            center_x(progress_bar(0.0..=progress.total_achievements as f32, unlocked_and_excluded)),
+                        ].into()
                     },
                     TrophyCaseFilter::Perfected => {
-                        progress_bar(0.0..=progress.total_achievements as f32, (progress.unlocked_achievements) as f32).into()
+                        let percent_progress = 100.0 * (progress.unlocked_achievements) as f32 / progress.total_achievements as f32;
+                        column![
+                            center_x(text(format!("Achievement progress: {done}/{total} ({percent:.2}%)", done = progress.unlocked_achievements, total =  progress.total_achievements, percent = percent_progress))),
+                            center_x(progress_bar(0.0..=progress.total_achievements as f32, (progress.unlocked_achievements) as f32)),
+                        ].into()
                     },
                 }
             }
