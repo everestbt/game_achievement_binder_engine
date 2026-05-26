@@ -115,9 +115,28 @@ async fn refresh_game_achievement_cache(key : &str, steam_id : &str) {
     }
 }
 
+// Check for any excluded achievements that are now completed and remove them
+async fn sync_excluded_achievements(key : &str, steam_id : &str) {
+    let mut game_map = HashMap::new(); 
+    for e in excluded_achievement_store::get_excluded_achievements().expect("Failed to read excluded achievements") {
+        let pa = if let Some(loaded) = game_map.get(&e.app_id) {
+            loaded
+        }
+        else {
+            let player_achievements = achievement_fetch::get_player_achievements(key, steam_id, &e.app_id).await.expect("Game should have achievements if exclusions exist");
+            game_map.insert(e.app_id.clone(), player_achievements);
+            game_map.get(&e.app_id).unwrap()
+        };
+        if pa.achievements.iter().find(|a| a.apiname == e.achievement_name && a.achieved == 1).is_some() {
+            excluded_achievement_store::delete_excluded_achievement(&e.id).expect("Failed to delete excluded achievement")
+        }
+    }
+}
+
 pub async fn sync_caches(key : &str, steam_id : &str) {
     refresh_game_achievement_cache(key, steam_id).await;
     sync_completed_achievements(key, steam_id).await;
+    sync_excluded_achievements(key, steam_id).await;
 }
 
 pub struct GameCompletionStatus {

@@ -62,6 +62,17 @@ pub fn save_excluded_achievement(achievement_name: &String, app_id: &i32) -> Res
     Ok(())
 }
 
+pub fn delete_excluded_achievement(id: &i32) -> Result<()> {
+    let conn: Connection = db_manager::get_connection();
+    
+    conn.execute(
+        "DELETE FROM excluded_steam_achievements WHERE id = ?1 LIMIT 1",
+        params![id],
+    )?;
+
+    Ok(())
+}
+
 fn create_table(conn: &Connection) -> Result<()> {
     conn.execute(
         "CREATE TABLE IF NOT EXISTS excluded_steam_achievements (

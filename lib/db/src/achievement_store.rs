@@ -103,10 +103,8 @@ pub fn update_last_played(id: &i32, last_played: &i64) -> Result<()> {
 }
 
 pub fn delete_achievement(id: &i32) -> Result<()> {
-    // Connect to SQLite database (creates the file if it doesn't exist)
     let conn: Connection = db_manager::get_connection();
     
-    // Add in the achievement
     conn.execute(
         "DELETE FROM steam_achievements_v_2 WHERE id = ?1",
         params![id],
