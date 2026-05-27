@@ -6,7 +6,7 @@ use crate::Credentials;
 
 use db::excluded_achievement_store;
 use iced::widget::{
-    center_x, center_y, column, text, button, table, scrollable, image, image::Handle
+    center_x, center_y, column, text, button, table, scrollable, image, image::Handle, row
 };
 use iced::{Center, Left, Element, Font, font};
 use api::{
@@ -71,17 +71,17 @@ impl App {
                     };
                     let random_achievement = button("Random achievement!").on_press(Message::GenerateRandomAchievement(app_id));
 
-                    let controls = if let Some(target) = game_target_button {
+                    let controls: Element<'_, Message> = if let Some(target) = game_target_button {
                         column![
                             center_x(target),
                             center_x(random_achievement),
-                        ]
+                        ].into()
                     }
                     else {
-                        column![random_achievement]
+                        column![random_achievement].into()
                     };
 
-                    let table = {
+                    let table: Element<'_, Message> = {
                         let bold = |header| {
                             text(header).font(Font {
                                 weight: font::Weight::Bold,
@@ -124,12 +124,25 @@ impl App {
                             .padding_y(5)
                             .separator_x(1)
                             .separator_y(1)
+                            .into()
                     };
 
-                    column![
-                        center_x(text(game.game_name.clone())),
-                        center_x(controls),
-                        center_y(scrollable(center_x(table)).spacing(10)).padding(10),
+                    let game_cover: Element<'_, Message> = if let Some(cover) = self.game_covers.get(&game.app_id) {
+                        image(cover).width(600).height(1100).into()
+                    }
+                    else {
+                        text("No cover loaded").into()
+                    };
+                    
+                    row! [
+                        column![
+                            center_x(game_cover),
+                            center_x(text(game.game_name.clone())),
+                            center_x(controls),
+                        ],
+                        column![
+                            center_y(scrollable(center_x(table)).spacing(10)).padding(10),
+                        ]
                     ].into()
                 }
                 else {

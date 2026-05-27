@@ -140,7 +140,13 @@ impl App {
             },
             Message::GameView(id) => {
                 self.view = View::Game(id);
-                Task::perform(game_view::load_game_display(self.credentials.clone(), id, OWNED_GAMES.get(&id).expect("Does not exist").name.clone()), Message::GameLoaded)
+                let mut tasks = vec![
+                    Task::perform(game_view::load_game_display(self.credentials.clone(), id, OWNED_GAMES.get(&id).expect("Does not exist").name.clone()), Message::GameLoaded),
+                ];
+                if !self.game_covers.contains_key(&id) {
+                    tasks.push(Task::perform(trophy_case_view::load_game_covers(vec![id]), Message::GameCoversLoaded))
+                }
+                Task::batch(tasks)
             },
             Message::GameLoaded(display) => {
                 let filtered_icons: Vec<GameGoalDisplay> = display.goals.iter()
