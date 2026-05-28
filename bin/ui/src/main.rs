@@ -22,6 +22,7 @@ use db::{
     steam_id_store,
     game_target_store,
     excluded_achievement_store,
+    game_cover_store,
 };
 use goals_lib::goals;
 use game_view::{GameDisplay, GameGoalDisplay};
@@ -74,6 +75,9 @@ enum Message {
     GameCoversLoaded(HashMap<i32, Handle>), // app_id -> Game Cover
     CachesSynced(Result<(), SimpleError>),
     GameListSearch(String),
+    EditGameCover(i32), // app_id
+    GameCoverURLInput(String),
+    SaveGameCover,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -285,6 +289,44 @@ impl App {
                     _ => Task::none()
                 }
             },
+            Message::EditGameCover(app_id) => {
+                if let Some(g) = self.game_views.get_mut(&app_id) {
+                    g.game_cover_edit = true;
+                }
+                Task::none()
+            },
+            Message::GameCoverURLInput(input) => {
+                // This should only be done from a game view, where we can then get the app_id
+                match self.view {
+                    View::Game(app_id) => {
+                        if let Some(game) = self.game_views.get_mut(&app_id) {
+                            game.game_cover_url = input;
+                            Task::none()
+                        }
+                        else {
+                            unreachable!("Should not be possible to call this when game view is not loaded")
+                        }
+                    },
+                    _ => unreachable!("Should not be called from another view")
+                }
+            },
+            Message::SaveGameCover => {
+                // This should only be done from a game view, where we can then get the app_id
+                match self.view {
+                    View::Game(app_id) => {
+                        if let Some(game) = self.game_views.get_mut(&app_id) {
+                            println!("Setting url {}", game.game_cover_url);
+                            game_cover_store::save_game_cover(&game.game_cover_url, &app_id).expect("Failed to save game cover");
+                            game.game_cover_edit = false;
+                            Task::perform(trophy_case_view::load_game_covers(vec![app_id]), Message::GameCoversLoaded)
+                        }
+                        else {
+                            unreachable!("Should not be possible to call this when game view is not loaded")
+                        }
+                    },
+                    _ => unreachable!("Should not be called from another view")
+                }
+            }
         }
     }
 

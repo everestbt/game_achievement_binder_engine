@@ -6,7 +6,7 @@ use crate::Credentials;
 
 use db::excluded_achievement_store;
 use iced::widget::{
-    center_x, center_y, column, text, button, table, scrollable, image, image::Handle, row
+    center_x, center_y, column, text, button, table, scrollable, image, image::Handle, row, text_input
 };
 use iced::{Center, Left, Element, Font, font};
 use api::{
@@ -19,6 +19,7 @@ use std::collections::{HashSet, HashMap};
 use db::{
     game_target_store,
     achievement_store,
+    game_cover_store,
 };
 use rayon::prelude::*;
 use goals_lib::goals;
@@ -31,6 +32,9 @@ pub struct GameDisplay {
     pub target: bool,
     pub complete: bool,
     pub goals: Vec<GameGoalDisplay>,
+    // view state
+    pub game_cover_edit: bool,
+    pub game_cover_url: String,
 }
 
 #[derive(Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq)]
@@ -133,12 +137,23 @@ impl App {
                     else {
                         text("No cover loaded").into()
                     };
+
+                    let game_cover_edit: Element<'_, Message> = if game.game_cover_edit {
+                        text_input("Enter a url for the game cover", &game.game_cover_url)
+                                .on_input(Message::GameCoverURLInput)
+                                .on_submit(Message::SaveGameCover)
+                                .into()
+                    }
+                    else {
+                        button("Edit game cover").on_press(Message::EditGameCover(game.app_id.clone())).into()
+                    };
                     
                     row! [
                         column![
                             center_x(game_cover),
                             center_x(text(game.game_name.clone())),
                             center_x(controls),
+                            center_x(game_cover_edit)
                         ],
                         column![
                             center_y(scrollable(center_x(table)).spacing(10)).padding(10),
@@ -218,12 +233,15 @@ pub async fn load_game_display(credentials: Credentials, app_id: i32, game_name:
         .collect();
     goals.sort_by_key(|g| g.goal_state);
     let target = game_target_store::get_game_target(&app_id).expect("Failed to load target");
+    let game_cover_url = game_cover_store::get_game_cover(&app_id).expect("Failed to load game cover").map_or("".to_string(), |g| g.url);
     GameDisplay { 
         app_id,
         game_name,
         goals,
         target: target.is_some(),
         complete: target.map(|t| t.complete).unwrap_or(false),
+        game_cover_edit: false,
+        game_cover_url: game_cover_url,
     }
 }
 
