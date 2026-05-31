@@ -2,7 +2,7 @@ use rusqlite::{params, Connection, Result};
 
 use db_lib::db_manager;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct GameCompletion {
     pub app_id: i32,
     pub achievements_completed: u32,
@@ -24,11 +24,11 @@ pub fn get_game_completion(app_id: &i32) -> Result<Option<GameCompletion>> {
         })
     })?;
     if let Some(found) = achieve_iter.next() {
-        if found.is_err() {
-            Err(found.err().unwrap())
+        if let Ok(result) = found {
+            Ok(Some(result))
         }
         else {
-            Ok(Some(found.unwrap()))
+            Err(found.unwrap_err())
         }
     }
     else {
