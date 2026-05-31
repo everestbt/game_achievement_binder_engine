@@ -2693,6 +2693,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "mtga_log_reader"
+version = "0.0.0"
+dependencies = [
+ "directories",
+]
+
+[[package]]
 name = "mundy"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
