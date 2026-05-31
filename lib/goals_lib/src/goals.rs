@@ -87,7 +87,7 @@ async fn refresh_game_achievement_cache(key : &str, steam_id : &str) {
     let cache_load = game_completion_cache::get_all_completions().expect("Failed to load completed games");
     let completed_games_cache: HashMap<i32, &GameCompletion> = cache_load
         .iter()
-        .map(|n| (n.app_id.clone(), n))
+        .map(|n| (n.app_id, n))
         .collect();
     for game in games {
         // Check if cached and not played since
@@ -124,7 +124,7 @@ async fn sync_excluded_achievements(key : &str, steam_id : &str) {
         }
         else {
             let player_achievements = achievement_fetch::get_player_achievements(key, steam_id, &e.app_id).await.expect("Game should have achievements if exclusions exist");
-            game_map.insert(e.app_id.clone(), player_achievements);
+            game_map.insert(e.app_id, player_achievements);
             game_map.get(&e.app_id).unwrap()
         };
         if pa.achievements.iter().find(|a| a.apiname == e.achievement_name && a.achieved == 1).is_some() {
