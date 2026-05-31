@@ -49,11 +49,7 @@ pub fn main() -> iced::Result {
     // Do this call to instantiate the owned games list before the program starts
     OWNED_GAMES.len();
     color_eyre::install().expect("Failed to install color eyre");
-    let window_settings = {
-        let mut settings = Settings::default();
-        settings.maximized = true;
-        settings
-    };
+    let window_settings = Settings{ maximized: true, ..Settings::default() };
     iced::application(App::new, App::update, App::view)
         .window(window_settings)
         .theme(Theme::CatppuccinMocha)

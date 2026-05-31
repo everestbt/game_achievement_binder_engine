@@ -145,7 +145,7 @@ impl App {
                                 .into()
                     }
                     else {
-                        button("Edit game cover").on_press(Message::EditGameCover(game.app_id.clone())).into()
+                        button("Edit game cover").on_press(Message::EditGameCover(game.app_id)).into()
                     };
                     
                     row! [
@@ -241,7 +241,7 @@ pub async fn load_game_display(credentials: Credentials, app_id: i32, game_name:
         target: target.is_some(),
         complete: target.map(|t| t.complete).unwrap_or(false),
         game_cover_edit: false,
-        game_cover_url: game_cover_url,
+        game_cover_url,
     }
 }
 

@@ -26,7 +26,7 @@ impl App {
             _ => unreachable!("Should only be call when in trophy case view")
         };
 
-        if let Some(trophies) = self.trophies.get(&filter) {
+        if let Some(trophies) = self.trophies.get(filter) {
             let game_progress: Element<'_, Message> = {
                 let percent_progress = 100.0 * trophies.len() as f32 / OWNED_GAMES.len() as f32;
                 column![
