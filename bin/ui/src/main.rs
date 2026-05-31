@@ -6,6 +6,7 @@ mod trophy_case_view;
 use iced::widget::{
     center_x, column, row, button, image::Handle, text, 
 };
+use iced::window::Settings;
 use iced::{Element, Theme, Task};
 use games_list_view::{
     GameListDisplay, 
@@ -48,7 +49,13 @@ pub fn main() -> iced::Result {
     // Do this call to instantiate the owned games list before the program starts
     OWNED_GAMES.len();
     color_eyre::install().expect("Failed to install color eyre");
+    let window_settings = {
+        let mut settings = Settings::default();
+        settings.maximized = true;
+        settings
+    };
     iced::application(App::new, App::update, App::view)
+        .window(window_settings)
         .theme(Theme::CatppuccinMocha)
         .run()
 }
