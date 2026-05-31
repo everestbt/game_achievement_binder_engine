@@ -1,0 +1,436 @@
+{
+    "NodeStates": {
+        "---META_WelcomeToArena": {
+            "Status": "Completed"
+        },
+        "GoingForGold": {
+            "Status": "Completed",
+            "ProgressionHistoryStateDataState": {
+                "progressedDateTimeUTC": "2025-02-10T19:31:40.04Z"
+            }
+        },
+        "GoingForGoldReward": {
+            "Status": "Completed"
+        },
+        "EventHorizon": {
+            "Status": "Completed",
+            "ProgressionHistoryStateDataState": {
+                "progressedDateTimeUTC": "2025-02-19T20:34:55.829Z"
+            }
+        },
+        "EventHorizonReward": {
+            "Status": "Completed"
+        },
+        "WeekSpot": {
+            "Status": "Completed",
+            "ProgressionHistoryStateDataState": {
+                "progressedDateTimeUTC": "2025-02-13T18:27:13.484Z"
+            }
+        },
+        "WeekSpotReward": {
+            "Status": "Completed"
+        },
+        "SpellsWithStyle": {
+            "Status": "Completed"
+        },
+        "SpellsWithStyleReward": {
+            "Status": "Completed"
+        },
+        "FavoriteBasics": {
+            "Status": "Completed",
+            "ProgressionHistoryStateDataState": {
+                "progressedDateTimeUTC": "2025-02-25T12:25:13.417Z"
+            }
+        },
+        "FavoriteBasicsReward": {
+            "Status": "Completed"
+        },
+        "SimpleMastery": {
+            "Status": "Completed",
+            "ProgressionHistoryStateDataState": {
+                "progressedDateTimeUTC": "2025-02-20T20:00:17.58Z"
+            }
+        },
+        "SimpleMasteryReward": {
+            "Status": "Completed"
+        },
+        "DailyQuestReroll": {
+            "Status": "Completed",
+            "ProgressionHistoryStateDataState": {
+                "progressedDateTimeUTC": "2025-02-12T12:25:18.387Z"
+            }
+        },
+        "DailyQuestRerollReward": {
+            "Status": "Completed"
+        },
+        "---META_ArenaMilestones": {
+            "AccumulativePayoutState": {
+                "Count": 10
+            }
+        },
+        "VisitTheShoresOfImaginationTier1": {
+            "Status": "Completed"
+        },
+        "VisitTheShoresOfImaginationTier1Reward": {
+            "Status": "Completed"
+        },
+        "VisitTheShoresOfImaginationTier2": {
+            "Status": "Available",
+            "MatchAchievementNodeState": {
+                "CurrentProgress": 939
+            }
+        },
+        "VisitTheShoresOfImaginationTier3": {
+            "Status": "Available",
+            "MatchAchievementNodeState": {
+                "CurrentProgress": 939
+            }
+        },
+        "RankedConstructedPlayerTier1": {
+            "Status": "Completed",
+            "ProgressionHistoryStateDataState": {
+                "progressedDateTimeUTC": "2025-02-10T19:31:40.04Z"
+            }
+        },
+        "RankedConstructedPlayerTier1Reward": {
+            "Status": "Completed"
+        },
+        "RankedConstructedPlayerTier2": {
+            "Status": "Completed",
+            "ProgressionHistoryStateDataState": {
+                "progressedDateTimeUTC": "2026-03-25T07:43:29.267Z"
+            }
+        },
+        "RankedConstructedPlayerTier2Reward": {
+            "Status": "Completed"
+        },
+        "RankedConstructedPlayerTier3": {
+            "Status": "Available",
+            "ProgressionHistoryStateDataState": {
+                "progressedDateTimeUTC": "2026-05-26T07:03:37.767Z"
+            }
+        },
+        "RankedLimitedPlayerTier1": {
+            "Status": "Completed",
+            "ProgressionHistoryStateDataState": {
+                "progressedDateTimeUTC": "2025-02-28T14:14:31.913Z"
+            }
+        },
+        "RankedLimitedPlayerTier1Reward": {
+            "Status": "Completed"
+        },
+        "RankedLimitedPlayerTier2": {
+            "Status": "Available",
+            "ProgressionHistoryStateDataState": {
+                "progressedDateTimeUTC": "2026-05-30T17:45:50.3Z"
+            }
+        },
+        "RankedLimitedPlayerTier3": {
+            "Status": "Available",
+            "ProgressionHistoryStateDataState": {
+                "progressedDateTimeUTC": "2026-05-30T17:45:50.3Z"
+            }
+        },
+        "LeaderOfThePackTier1": {
+            "Status": "Completed"
+        },
+        "LeaderOfThePackTier1Reward": {
+            "Status": "Completed"
+        },
+        "LeaderOfThePackTier2": {
+            "Status": "Completed"
+        },
+        "LeaderOfThePackTier2Reward": {
+            "Status": "Completed"
+        },
+        "LeaderOfThePackTier3": {
+            "Status": "Available",
+            "ProgressNodeState": {
+                "CurrentProgress": 398
+            }
+        },
+        "CraftmasterTier1": {
+            "Status": "Completed"
+        },
+        "CraftmasterTier1Reward": {
+            "Status": "Completed"
+        },
+        "CraftmasterTier2": {
+            "Status": "Completed"
+        },
+        "CraftmasterTier2Reward": {
+            "Status": "Completed"
+        },
+        "CraftmasterTier3": {
+            "Status": "Completed"
+        },
+        "CraftmasterTier3Reward": {
+            "Status": "Completed"
+        },
+        "CollectCardsTier1": {
+            "Status": "Completed"
+        },
+        "CollectCardsTier1Reward": {
+            "Status": "Completed"
+        },
+        "CollectCardsTier2": {
+            "Status": "Available", 
+            "ThresholdNodeState": {
+                "LatestProgress": 0.9619565217391305
+            }
+        },
+        "---META_ArenaFormats": {
+            "AccumulativePayoutState": {
+                "Count": 9
+            }
+        },
+        "StandardMageTier1": {
+            "Status": "Available",
+            "MatchAchievementNodeState": {
+                "CurrentProgress": 16
+            }
+        },
+        "StandardMageTier2": {
+            "Status": "Available",
+            "MatchAchievementNodeState": {
+                "CurrentProgress": 16
+            }
+        },
+        "StandardMageTier3": {
+            "Status": "Available",
+            "MatchAchievementNodeState": {
+                "CurrentProgress": 16
+            }
+        },
+        "AlchemyMageTier1": {
+            "Status": "Available",
+            "MatchAchievementNodeState": {
+                "CurrentProgress": 3
+            }
+        },
+        "AlchemyMageTier2": {
+            "Status": "Available",
+            "MatchAchievementNodeState": {
+                "CurrentProgress": 3
+            }
+        },
+        "AlchemyMageTier3": {
+            "Status": "Available",
+            "MatchAchievementNodeState": {
+                "CurrentProgress": 3
+            }
+        },
+        "ExplorerMageTier1": {
+            "Status": "Completed"
+        },
+        "ExplorerMageTier1Reward": {
+            "Status": "Completed"
+        },
+        "ExplorerMageTier2": {
+            "Status": "Completed"
+        },
+        "ExplorerMageTier2Reward": {
+            "Status": "Completed"
+        },
+        "ExplorerMageTier3": {
+            "Status": "Completed"
+        },
+        "ExplorerMageTier3Reward": {
+            "Status": "Completed"
+        },
+        "HistoricMageTier1": {
+            "Status": "Completed"
+        },
+        "HistoricMageTier1Reward": {
+            "Status": "Completed"
+        },
+        "HistoricMageTier2": {
+            "Status": "Available",
+            "MatchAchievementNodeState": {
+                "CurrentProgress": 99
+            }
+        },
+        "HistoricMageTier3": {
+            "Status": "Available",
+            "MatchAchievementNodeState": {
+                "CurrentProgress": 99
+            }
+        },
+        "TimelessMageTier1": {
+            "Status": "Available",
+            "MatchAchievementNodeState": {}
+        },
+        "TimelessMageTier2": {
+            "Status": "Available",
+            "MatchAchievementNodeState": {}
+        },
+        "TimelessMageTier3": {
+            "Status": "Available",
+            "MatchAchievementNodeState": {}
+        },
+        "BrawlMageTier1": {
+            "Status": "Completed"
+        },
+        "BrawlMageTier1Reward": {
+            "Status": "Completed"
+        },
+        "BrawlMageTier2": {
+            "Status": "Available",
+            "MatchAchievementNodeState": {
+                "CurrentProgress": 76
+            }
+        },
+        "BrawlMageTier3": {
+            "Status": "Available",
+            "MatchAchievementNodeState": {
+                "CurrentProgress": 76
+            }
+        },
+        "LimitedMageTier1": {
+            "Status": "Completed",
+            "ProgressionHistoryStateDataState": {
+                "progressedDateTimeUTC": "2025-03-02T15:10:51.358Z"
+            }
+        },
+        "LimitedMageTier1Reward": {
+            "Status": "Completed"
+        },
+        "LimitedMageTier2": {
+            "Status": "Completed",
+            "ProgressionHistoryStateDataState": {
+                "progressedDateTimeUTC": "2026-05-05T10:30:01.283Z"
+            }
+        },
+        "LimitedMageTier2Reward": {
+            "Status": "Completed"
+        },
+        "LimitedMageTier3": {
+            "Status": "Available",
+            "ProgressNodeState": {
+                "CurrentProgress": 31
+            },
+            "ProgressionHistoryStateDataState": {
+                "progressedDateTimeUTC": "2026-05-30T17:46:07.521Z"
+            }
+        },
+        "MidweekMageTier1": {
+            "Status": "Completed",
+            "ProgressionHistoryStateDataState": {
+                "progressedDateTimeUTC": "2025-12-17T13:06:51.958Z"
+            }
+        },
+        "MidweekMageTier1Reward": {
+            "Status": "Completed"
+        },
+        "MidweekMageTier2": {
+            "Status": "Completed",
+            "ProgressionHistoryStateDataState": {
+                "progressedDateTimeUTC": "2026-03-12T09:07:32.525Z"
+            }
+        },
+        "MidweekMageTier2Reward": {
+            "Status": "Completed"
+        },
+        "MidweekMageTier3": {
+            "Status": "Available",
+            "ProgressNodeState": {
+                "CurrentProgress": 23
+            },
+            "ProgressionHistoryStateDataState": {
+                "progressedDateTimeUTC": "2026-05-28T06:55:48.254Z"
+            }
+        },
+        "---META_AdvancedAchievements": {
+            "AccumulativePayoutState": {
+                "Count": 7
+            }
+        },
+        "VaultCracker": {
+            "Status": "Completed",
+            "ProgressionHistoryStateDataState": {
+                "progressedDateTimeUTC": "2026-02-13T12:56:36.054Z"
+            }
+        },
+        "VaultCrackerReward": {
+            "Status": "Completed"
+        },
+        "BestOf3Comeback": {
+            "Status": "Completed"
+        },
+        "BestOf3ComebackReward": {
+            "Status": "Completed"
+        },
+        "UndefeatedLimited": {
+            "Status": "Available",
+            "ProgressNodeState": {},
+            "ProgressionHistoryStateDataState": {}
+        },
+        "KeywordSoup": {
+            "Status": "Available",
+            "MatchAchievementNodeState": {}
+        },
+        "PowerNine": {
+            "Status": "Completed"
+        },
+        "PowerNineReward": {
+            "Status": "Completed"
+        },
+        "PlaneswalkerUltimate": {
+            "Status": "Completed"
+        },
+        "PlaneswalkerUltimateReward": {
+            "Status": "Completed"
+        },
+        "MillVictory": {
+            "Status": "Available",
+            "MatchAchievementNodeState": {}
+        },
+        "PoisonVictory": {
+            "Status": "Available",
+            "MatchAchievementNodeState": {}
+        },
+        "RuleOfFive": {
+            "Status": "Available",
+            "ProgressNodeState": {},
+            "ProgressionHistoryStateDataState": {}
+        },
+        "MasteryMaster": {
+            "Status": "Completed",
+            "ProgressionHistoryStateDataState": {
+                "progressedDateTimeUTC": "2026-04-13T18:33:30Z"
+            }
+        },
+        "MasteryMasterReward": {
+            "Status": "Completed"
+        },
+        "OpenTenPacks": {
+            "Status": "Completed"
+        },
+        "OpenTenPacksReward": {
+            "Status": "Completed"
+        },
+        "RareDrafter": {
+            "Status": "Available",
+            "ProgressNodeState": {},
+            "ProgressionHistoryStateDataState": {}
+        },
+        "NoRaresWin": {
+            "Status": "Available",
+            "ProgressNodeState": {},
+            "ProgressionHistoryStateDataState": {}
+        },
+        "NoCreaturesWin": {
+            "Status": "Completed"
+        },
+        "NoCreaturesWinReward": {
+            "Status": "Completed"
+        },
+        "MythicChampion": {
+            "Status": "Available",
+            "ProgressionHistoryStateDataState": {
+                "progressedDateTimeUTC": "2026-05-30T17:45:50.3Z"
+            }
+        }
+    },
+    "MilestoneStates": {}
+}

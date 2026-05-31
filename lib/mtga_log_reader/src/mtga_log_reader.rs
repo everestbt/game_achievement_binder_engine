@@ -1,17 +1,46 @@
 use directories::{BaseDirs};
 use std::env::consts::OS;
-use std::fs;
+use std::fs::File;
 use std::path::{Path, PathBuf};
+use std::io::{BufRead, BufReader};
+use std::str::FromStr;
+use serde_json::Value;
+use convert_case::ccase;
 
 static PARENT_DIR_1: & str = "Wizards Of The Coast";
 static PARENT_DIR_2: & str = "MTGA";
 static LOG_FILE_NAME: & str = "Player.log";
 
+struct Achievement {
+    name: String,
+    achieved: bool
+}
+
 fn read_file() {
     let path = get_path();
-    let read = fs::read_to_string(path);
-    println!("FILE: {}", read.unwrap())
-    
+    if let Ok(file) = File::open(path) {
+        let lines = BufReader::new(file).lines();
+
+        let mut achievements = vec![];
+        for l in lines.map_while(Result::ok) {
+            if l.starts_with("{\"NodeStates\":{\"---META_WelcomeToArena\"") {
+                let node = Value::from_str(l.as_str()).unwrap();
+                let achievement_map = node.get("NodeStates").unwrap();
+                for v in achievement_map.as_object().unwrap().iter() {
+                    let name = format_achievement_name(v.0);
+                    let achieved = v.1.get("Status").and_then(Value::as_str).map(|f| f == "Completed").unwrap_or(false);
+                    achievements.push(Achievement {name, achieved});
+                }
+            }
+        }
+        for a in achievements {
+            println!("{} : {}", a.name, a.achieved)
+        }
+    }
+}
+
+fn format_achievement_name(string: &str) -> String {
+    ccase!(pascal -> title, string)
 }
 
 fn get_path() -> PathBuf {
