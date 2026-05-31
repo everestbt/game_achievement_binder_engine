@@ -23,7 +23,7 @@ use db::{
 };
 use rayon::prelude::*;
 use goals_lib::goals;
-use simple_error::SimpleError;
+use simple_error::{SimpleError, SimpleResult};
 
 #[derive(Debug, Clone)]
 pub struct GameDisplay {
@@ -182,7 +182,7 @@ impl App {
     }
 }
 
-pub async fn generate_random_achievement(credentials: Credentials, app_id: i32) -> Result<(Game, Option<GameAchievement>), SimpleError> {
+pub async fn generate_random_achievement(credentials: Credentials, app_id: i32) -> SimpleResult<(Game, Option<GameAchievement>)> {
     if let Some(game) = game_fetch::get_owned_games(&credentials.key, &credentials.steam_id).await.iter().find(|g| g.appid == app_id) {
         Ok((game.clone(), goals::get_random_achievement_for_game(&credentials.key, &credentials.steam_id, game).await))
     }
@@ -256,7 +256,7 @@ pub async fn load_all_goal_icons(app_id: i32, achievements: Vec<GameGoalDisplay>
     map
 }
 
-pub async fn load_goal_icon(app_id: i32, achievement_name: String, icon_url: String, icon_gray_url: String, goal_state: GoalState) -> Result<(i32, String, Handle), SimpleError> {
+pub async fn load_goal_icon(app_id: i32, achievement_name: String, icon_url: String, icon_gray_url: String, goal_state: GoalState) -> SimpleResult<(i32, String, Handle)> {
     let img_response = if goal_state == GoalState::Complete {
         reqwest::get(icon_url).await
     }

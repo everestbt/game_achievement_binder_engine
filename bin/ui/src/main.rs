@@ -14,7 +14,7 @@ use games_list_view::{
 };
 use goals_view::Goal;
 use api::game_fetch::{self, Game};
-use simple_error::SimpleError;
+use simple_error::{SimpleResult};
 use std::env;
 use std::collections::HashMap;
 use std::sync::LazyLock;
@@ -64,7 +64,7 @@ enum Message {
     AchievementCheckboxToggled(bool),
     GamesLoaded(GameListResult),
     GenerateRandomAchievement(i32), // app_id
-    RandomAchievementGenerated(Result<(Game, Option<GameAchievement>), SimpleError>), 
+    RandomAchievementGenerated(SimpleResult<(Game, Option<GameAchievement>)>), 
     SetAsGameTarget(i32), // app_id
     SetGameAsComplete(i32), // app_id
     RandomGame,
@@ -73,7 +73,7 @@ enum Message {
     TrophiesLoaded((TrophyCaseFilter, Vec<i32>)), // app_id's
     AchievementProgressLoaded(TotalAchievementProgress),
     GameCoversLoaded(HashMap<i32, Handle>), // app_id -> Game Cover
-    CachesSynced(Result<(), SimpleError>),
+    CachesSynced(SimpleResult<()>),
     GameListSearch(String),
     EditGameCover(i32), // app_id
     GameCoverURLInput(String),
@@ -362,7 +362,7 @@ fn load_credentials() -> Credentials {
     }
 }
 
-async fn sync_caches(credentials: Credentials) -> Result<(), SimpleError> {
+async fn sync_caches(credentials: Credentials) -> SimpleResult<()> {
     goals::sync_caches(&credentials.key, &credentials.steam_id).await;
     Ok(())
 }
