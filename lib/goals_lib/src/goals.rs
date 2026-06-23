@@ -170,14 +170,12 @@ pub fn get_game_completion() -> HashMap<i32, GameCompletionStatus> {
     let excluded_count = get_excluded_count();
     for e in excluded_count {
         let game_status = game_completion_cache::get_game_completion(&e.0).expect("Failed to read game completion");
-        if let Some(progress) = game_status {
-            if progress.achievements_completed + e.1 == progress.achievement_count {
-                if let Some(present) = completion_map.get_mut(&progress.app_id) {
-                    present.complete = true;
-                }
-                else {
-                    completion_map.insert(progress.app_id, GameCompletionStatus { complete: true, perfect: false });
-                }
+        if let Some(progress) = game_status && progress.achievements_completed + e.1 == progress.achievement_count {
+            if let Some(present) = completion_map.get_mut(&progress.app_id) {
+                present.complete = true;
+            }
+            else {
+                completion_map.insert(progress.app_id, GameCompletionStatus { complete: true, perfect: false });
             }
         }
     }
