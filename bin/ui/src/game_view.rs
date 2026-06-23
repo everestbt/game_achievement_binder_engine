@@ -173,10 +173,8 @@ impl App {
     pub fn handle_generated_random_achievement(&mut self, game: Game, random_achievement: Option<GameAchievement>) {
         if let Some(ra) = random_achievement {
             achievement_store::save_achievement(&ra.name, &ra.display_name, &ra.description, &game.appid, &game.last_played).expect("Failed to save achievement");
-            if let Some(game_view) = self.game_views.get_mut(&game.appid) {
-                if let Some(achievement) = game_view.goals.iter_mut().find(|a| a.achievement_name == ra.name) {
-                    achievement.goal_state = GoalState::Goal;
-                }
+            if let Some(game_view) = self.game_views.get_mut(&game.appid) && let Some(achievement) = game_view.goals.iter_mut().find(|a| a.achievement_name == ra.name) {
+                achievement.goal_state = GoalState::Goal;
             }
         }
     }
