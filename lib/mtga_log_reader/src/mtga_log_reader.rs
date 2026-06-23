@@ -7,21 +7,25 @@ use std::str::FromStr;
 use serde_json::Value;
 use convert_case::ccase;
 
-static PARENT_DIR_1: & str = "Wizards Of The Coast";
-static PARENT_DIR_2: & str = "MTGA";
-static LOG_FILE_NAME: & str = "Player.log";
-
-struct Achievement {
-    name: String,
-    achieved: bool
+#[derive(PartialEq)]
+pub struct Achievement {
+    pub name: String,
+    pub achieved: bool
 }
 
-fn read_file() {
+/// Reads in the current Player.log and returns a vector of achievements and their status
+/// 
+/// The absence of an achievement does not mean it no longer exists or that it is not achieved, 
+/// it just means it was not found on current scan.
+pub fn get_readable_achievements() -> Vec<Achievement> {
     let path = get_path();
+    read_file(path)
+}
+
+fn read_file(path: PathBuf) -> Vec<Achievement> {
+    let mut achievements = vec![];
     if let Ok(file) = File::open(path) {
         let lines = BufReader::new(file).lines();
-
-        let mut achievements = vec![];
         for l in lines.map_while(Result::ok) {
             if l.starts_with("{\"NodeStates\":{\"---META_WelcomeToArena\"") {
                 let node = Value::from_str(l.as_str()).unwrap();
@@ -31,17 +35,20 @@ fn read_file() {
                     let achieved = v.1.get("Status").and_then(Value::as_str).map(|f| f == "Completed").unwrap_or(false);
                     achievements.push(Achievement {name, achieved});
                 }
+                break
             }
         }
-        for a in achievements {
-            println!("{} : {}", a.name, a.achieved)
-        }
     }
+    achievements
 }
 
 fn format_achievement_name(string: &str) -> String {
     ccase!(pascal -> title, string)
 }
+
+static PARENT_DIR_1: & str = "Wizards Of The Coast";
+static PARENT_DIR_2: & str = "MTGA";
+static LOG_FILE_NAME: & str = "Player.log";
 
 fn get_path() -> PathBuf {
     if let Some(dirs) = BaseDirs::new() {
@@ -63,6 +70,8 @@ mod tests {
 
     #[test]
     fn test_read_in_file() {
-        read_file();
+        let achievements = read_file(PathBuf::from_str("./example.log").unwrap());
+        assert!(!achievements.is_empty());
+        assert!(achievements.contains(&Achievement { name: "Going For Gold".to_string(), achieved: true }))
     }
 }
