@@ -2678,6 +2678,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "module"
+version = "0.0.0"
+dependencies = [
+ "api",
+ "chrono",
+]
+
+[[package]]
 name = "moxcms"
 version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4902,6 +4910,7 @@ dependencies = [
  "db",
  "goals_lib",
  "iced",
+ "module",
  "rand 0.10.1",
  "rayon",
  "reqwest",

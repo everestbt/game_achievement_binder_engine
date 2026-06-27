@@ -63,7 +63,7 @@ async fn main() -> Result<(), reqwest::Error> {
         let credentials = get_credentials(&args);
         let game = request_game_name(&credentials.key, &credentials.steam_id).await.expect("No game found for search");
 
-        let random_achievement: Option<GameAchievement> = goals::get_random_achievement_for_game(&credentials.key, &credentials.steam_id, &game).await;
+        let random_achievement: Option<GameAchievement> = goals::get_random_achievement_for_game(&credentials.key, &credentials.steam_id, &game.appid).await;
         if let Some(a) = random_achievement {
             println!("And your selected achievement is:");
             println!(
@@ -90,7 +90,7 @@ async fn main() -> Result<(), reqwest::Error> {
         while !owned_games.is_empty() {
             let index = (rand::random::<f32>() * owned_games.len() as f32).floor() as usize;
             let random_game = owned_games.remove(index);
-            let random_achievement: Option<GameAchievement> = goals::get_random_achievement_for_game(&credentials.key, &credentials.steam_id, &random_game).await;
+            let random_achievement: Option<GameAchievement> = goals::get_random_achievement_for_game(&credentials.key, &credentials.steam_id, &random_game.appid).await;
             if let Some(a) = random_achievement {
                 game_and_achievement = Some((random_game, a));
                 break;

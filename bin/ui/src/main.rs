@@ -14,7 +14,6 @@ use games_list_view::{
     GameListResult
 };
 use goals_view::Goal;
-use api::game_fetch::{self, Game};
 use simple_error::{SimpleResult};
 use std::env;
 use std::collections::HashMap;
@@ -32,6 +31,7 @@ use trophy_case_view::{
     TrophyCaseFilter, 
     TotalAchievementProgress
 };
+use module::Game;
 
 // We only need to load this once, do it statically so it can be shared between all threads
 pub static OWNED_GAMES: LazyLock<HashMap<i32, Game>> = LazyLock::new(|| {
@@ -40,8 +40,8 @@ pub static OWNED_GAMES: LazyLock<HashMap<i32, Game>> = LazyLock::new(|| {
         let runtime = tokio::runtime::Runtime::new().expect("Unable to create a runtime");
         // Sync and update all data
         runtime.block_on(goals::sync_caches(&key, &steam_id));
-        let owned_games_vec = runtime.block_on(game_fetch::get_owned_games(&key, &steam_id));
-        owned_games_vec.iter().map(|g| (g.appid, g.clone())).collect::<HashMap<_, _>>()
+        let owned_games_vec = runtime.block_on(module::get_module_games(module::Module::STEAM(key, steam_id)));
+        owned_games_vec.iter().map(|g| (g.id, g.clone())).collect::<HashMap<_, _>>()
     }
 );
 
@@ -205,7 +205,7 @@ impl App {
                 if let Ok(r) = random_achievement {
                     let tasks = vec![
                         Task::perform(Goal::list(self.credentials.clone()), Message::GoalsLoaded), 
-                        Task::perform(game_view::load_game_display(self.credentials.clone(), r.0.appid, r.0.name.clone()), Message::GameLoaded)
+                        Task::perform(game_view::load_game_display(self.credentials.clone(), r.0.id, r.0.name.clone()), Message::GameLoaded)
                     ];
                     self.handle_generated_random_achievement(r.0, r.1);
                     Task::batch(tasks)
@@ -229,7 +229,7 @@ impl App {
                 Task::perform(sync_caches(self.credentials.clone()), Message::CachesSynced)
             },
             Message::RandomGame => {
-                let random_game_id = OWNED_GAMES.values().nth(rand::random_range(..OWNED_GAMES.values().len())).unwrap().appid;
+                let random_game_id = OWNED_GAMES.values().nth(rand::random_range(..OWNED_GAMES.values().len())).unwrap().id;
                 self.view = View::Game(random_game_id).clone();
                 Task::perform(game_view::load_game_display(self.credentials.clone(), random_game_id, OWNED_GAMES.get(&random_game_id).expect("Does not exist").name.clone()), Message::GameLoaded)
             },

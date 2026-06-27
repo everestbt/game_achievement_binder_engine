@@ -1,0 +1,9 @@
+[package]
+name = "module"
+version = "0.0.0"
+edition = "2024"
+description = "A library for generic actions that apply to any game modules"
+
+[dependencies]
+chrono.workspace = true
+api.workspace = true

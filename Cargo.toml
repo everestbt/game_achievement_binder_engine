@@ -18,6 +18,7 @@ db = {path = "./lib/db", version = "0.0.0"}
 db_lib = {path = "./lib/db_lib", version = "0.0.0"}
 goals_lib = {path = "./lib/goals_lib", version = "0.0.0"}
 mtga_log_reader = {path = "./lib/mtga_log_reader", version = "0.0.0"}
+module = {path = "./lib/module", version = "0.0.0"}
 
 # non-local crates
 serde = { version = "1.0", features = ["derive"] }
@@ -28,7 +29,7 @@ rand = "0.10"
 clap = { version = "4.5.44", features = ["derive"] }
 rusqlite = "0.40.0"
 directories = "6.0.0"
-chrono = "0.4.41"
+chrono = "0.4"
 iced = { version = "0.14", features = ["image", "tokio"] }
 color-eyre = "0.6"
 rayon = "1.12"

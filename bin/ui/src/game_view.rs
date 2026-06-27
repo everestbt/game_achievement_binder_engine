@@ -1,5 +1,6 @@
 use super::App;
 
+use crate::OWNED_GAMES;
 use crate::View;
 use crate::Message;
 use crate::Credentials;
@@ -12,8 +13,6 @@ use iced::{Center, Left, Element, Font, font};
 use api::{
     achievement_fetch,
     achievement_fetch::GameAchievement,
-    game_fetch,
-    game_fetch::Game,
 };
 use std::collections::{HashSet, HashMap};
 use db::{
@@ -24,6 +23,7 @@ use db::{
 use rayon::prelude::*;
 use goals_lib::goals;
 use simple_error::{SimpleError, SimpleResult};
+use module::Game;
 
 #[derive(Debug, Clone)]
 pub struct GameDisplay {
@@ -172,8 +172,8 @@ impl App {
 
     pub fn handle_generated_random_achievement(&mut self, game: Game, random_achievement: Option<GameAchievement>) {
         if let Some(ra) = random_achievement {
-            achievement_store::save_achievement(&ra.name, &ra.display_name, &ra.description, &game.appid, &game.last_played).expect("Failed to save achievement");
-            if let Some(game_view) = self.game_views.get_mut(&game.appid) && let Some(achievement) = game_view.goals.iter_mut().find(|a| a.achievement_name == ra.name) {
+            achievement_store::save_achievement(&ra.name, &ra.display_name, &ra.description, &game.id, &(game.last_played.to_epoch_days() as i64 * 86400)).expect("Failed to save achievement");
+            if let Some(game_view) = self.game_views.get_mut(&game.id) && let Some(achievement) = game_view.goals.iter_mut().find(|a| a.achievement_name == ra.name) {
                 achievement.goal_state = GoalState::Goal;
             }
         }
@@ -181,8 +181,8 @@ impl App {
 }
 
 pub async fn generate_random_achievement(credentials: Credentials, app_id: i32) -> SimpleResult<(Game, Option<GameAchievement>)> {
-    if let Some(game) = game_fetch::get_owned_games(&credentials.key, &credentials.steam_id).await.iter().find(|g| g.appid == app_id) {
-        Ok((game.clone(), goals::get_random_achievement_for_game(&credentials.key, &credentials.steam_id, game).await))
+    if let Some(game) = OWNED_GAMES.get(&app_id) {
+        Ok((game.clone(), goals::get_random_achievement_for_game(&credentials.key, &credentials.steam_id, &game.id).await))
     }
     else {
         Err(SimpleError::new("No game with that app_id"))

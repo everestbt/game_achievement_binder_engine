@@ -11,12 +11,10 @@ use iced::{Element, Font};
 use db::{
     game_target_store,
 };
-use api::{
-    game_fetch::Game,
-};
 use std::collections::HashSet;
 use std::cmp::Reverse;
 use rayon::prelude::*;
+use module::Game;
 
 #[derive(Debug, Clone, Default, Eq, PartialEq, Hash)]
 pub enum GameListFilter {
@@ -67,28 +65,28 @@ impl GameListDisplay {
             .filter(|g| {
                 match filter {
                     GameListFilter::Targets => {
-                        target_set.contains(&g.appid)
+                        target_set.contains(&g.id)
                     }
                     GameListFilter::InProgress => {
-                        !completed_games_cache.get(&g.appid).map(|c| c.complete).unwrap_or(false) || target_set.contains(&g.appid)
+                        !completed_games_cache.get(&g.id).map(|c| c.complete).unwrap_or(false) || target_set.contains(&g.id)
                     },
                     GameListFilter::Completed => {
-                        completed_games_cache.get(&g.appid).map(|c| c.complete).unwrap_or(false) && !target_set.contains(&g.appid)
+                        completed_games_cache.get(&g.id).map(|c| c.complete).unwrap_or(false) && !target_set.contains(&g.id)
                     },
                     GameListFilter::Perfected => {
-                        completed_games_cache.get(&g.appid).map(|c| c.perfect).unwrap_or(false) && !target_set.contains(&g.appid)
+                        completed_games_cache.get(&g.id).map(|c| c.perfect).unwrap_or(false) && !target_set.contains(&g.id)
                     }
                 }
             })
             .filter(|g| {
                 if has_achievements {
-                    progress_cache.contains_key(&g.appid)
+                    progress_cache.contains_key(&g.id)
                 }
                 else {
                     true
                 }
             })
-            .map(|g| (g, progress_cache.get(&g.appid).map(|p| p.get_progress()).unwrap_or(0))) // Game, Progress
+            .map(|g| (g, progress_cache.get(&g.id).map(|p| p.get_progress()).unwrap_or(0))) // Game, Progress
             .collect();
         list.sort_by_key(|a| Reverse(a.1));
 
@@ -101,7 +99,7 @@ impl GameListDisplay {
                     GameListDisplay{
                         game_name: g.0.name.clone(),
                         progress_display: g.1.to_string(),
-                        id: g.0.appid,
+                        id: g.0.id,
                     }
                 })
                 .collect()
