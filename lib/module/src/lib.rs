@@ -1,4 +1,4 @@
-use api::game_fetch;
+use steam_api::game_fetch;
 use chrono::{DateTime, NaiveDate};
 
 /// A list of all available modules that are supported

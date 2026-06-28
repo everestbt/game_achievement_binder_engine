@@ -1,4 +1,4 @@
-use api::{achievement_fetch::{GameAchievement}, game_fetch};
+use steam_api::{achievement_fetch::{GameAchievement}, game_fetch};
 use db::{steam_id_store, achievement_store, excluded_achievement_store, request_store, game_completion_cache};
 use goals_lib::{goals};
 

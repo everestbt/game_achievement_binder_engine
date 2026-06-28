@@ -1,4 +1,4 @@
-use api::{achievement_fetch::{self, GameAchievement}, game_fetch};
+use steam_api::{achievement_fetch::{self, GameAchievement}, game_fetch};
 use db::{
     achievement_store, 
     excluded_achievement_store, 

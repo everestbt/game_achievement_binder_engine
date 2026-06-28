@@ -26,7 +26,7 @@ use db::{
 };
 use goals_lib::goals;
 use game_view::{GameDisplay, GameGoalDisplay};
-use api::achievement_fetch::GameAchievement;
+use steam_api::achievement_fetch::GameAchievement;
 use trophy_case_view::{
     TrophyCaseFilter, 
     TotalAchievementProgress

@@ -5,7 +5,7 @@ edition = "2024"
 description = "The CLI for G.A.B.E."
 
 [dependencies]
-api.workspace=true
+steam_api.workspace=true
 db.workspace=true
 goals_lib.workspace=true
 reqwest.workspace = true

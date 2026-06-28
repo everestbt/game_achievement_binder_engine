@@ -2,7 +2,7 @@ use super::App;
 
 use crate::{View, Message, OWNED_GAMES};
 
-use api::game_cover_fetch;
+use steam_api::game_cover_fetch;
 use goals_lib::goals;
 use iced::Element;
 use iced::widget::{

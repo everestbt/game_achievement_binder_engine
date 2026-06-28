@@ -10,7 +10,7 @@ use iced::{Center, Left, Font, Element};
 use db::{
     achievement_store, 
 };
-use api::game_fetch;
+use steam_api::game_fetch;
 use std::collections::HashMap;
 
 #[derive(Debug, Clone)]

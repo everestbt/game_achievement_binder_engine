@@ -1,5 +1,5 @@
 [package]
-name = "api"
+name = "steam_api"
 version = "0.0.0"
 edition = "2024"
 description = "Library for accessing the steam API"

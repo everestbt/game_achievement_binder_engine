@@ -10,7 +10,7 @@ use iced::widget::{
     center_x, center_y, column, text, button, table, scrollable, image, image::Handle, row, text_input
 };
 use iced::{Center, Left, Element, Font, font};
-use api::{
+use steam_api::{
     achievement_fetch,
     achievement_fetch::GameAchievement,
 };

@@ -5,6 +5,6 @@ edition = "2024"
 description = "A library for goals actions"
 
 [dependencies]
-api.workspace=true
+steam_api.workspace=true
 db.workspace=true
 rand.workspace = true
