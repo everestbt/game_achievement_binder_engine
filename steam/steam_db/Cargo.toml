@@ -1,5 +1,5 @@
 [package]
-name = "db"
+name = "steam_db"
 version = "0.0.0"
 edition = "2024"
 description = "The essential database access for steam random apps"

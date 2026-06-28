@@ -713,11 +713,11 @@ version = "0.0.0"
 dependencies = [
  "chrono",
  "clap",
- "db",
  "goals_lib",
  "rand 0.10.1",
  "reqwest",
  "steam_api",
+ "steam_db",
  "tokio",
 ]
 
@@ -1017,15 +1017,6 @@ name = "cursor-icon"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f27ae1dd37df86211c42e150270f82743308803d90a6f6e6651cd730d5e1732f"
-
-[[package]]
-name = "db"
-version = "0.0.0"
-dependencies = [
- "chrono",
- "db_lib",
- "rusqlite",
-]
 
 [[package]]
 name = "db_lib"
@@ -1632,9 +1623,9 @@ dependencies = [
 name = "goals_lib"
 version = "0.0.0"
 dependencies = [
- "db",
  "rand 0.10.1",
  "steam_api",
+ "steam_db",
 ]
 
 [[package]]
@@ -4443,11 +4434,20 @@ name = "steam_api"
 version = "0.0.0"
 dependencies = [
  "bytes",
- "db",
  "reqwest",
  "serde",
  "serde_json",
  "simple-error",
+ "steam_db",
+]
+
+[[package]]
+name = "steam_db"
+version = "0.0.0"
+dependencies = [
+ "chrono",
+ "db_lib",
+ "rusqlite",
 ]
 
 [[package]]
@@ -4906,7 +4906,6 @@ version = "0.0.0"
 dependencies = [
  "bytes",
  "color-eyre",
- "db",
  "goals_lib",
  "iced",
  "module",
@@ -4915,6 +4914,7 @@ dependencies = [
  "reqwest",
  "simple-error",
  "steam_api",
+ "steam_db",
  "tokio",
 ]
 

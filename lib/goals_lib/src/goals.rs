@@ -1,5 +1,5 @@
 use steam_api::{achievement_fetch::{self, GameAchievement}, game_fetch};
-use db::{
+use steam_db::{
     achievement_store, 
     excluded_achievement_store, 
     game_completion_cache, 

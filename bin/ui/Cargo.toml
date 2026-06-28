@@ -6,7 +6,7 @@ description = "The UI for G.A.B.E."
 
 [dependencies]
 steam_api.workspace=true
-db.workspace = true
+steam_db.workspace = true
 goals_lib.workspace = true
 tokio.workspace = true
 rand.workspace = true

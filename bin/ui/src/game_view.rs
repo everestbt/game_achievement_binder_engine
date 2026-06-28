@@ -5,7 +5,6 @@ use crate::View;
 use crate::Message;
 use crate::Credentials;
 
-use db::excluded_achievement_store;
 use iced::widget::{
     center_x, center_y, column, text, button, table, scrollable, image, image::Handle, row, text_input
 };
@@ -15,10 +14,11 @@ use steam_api::{
     achievement_fetch::GameAchievement,
 };
 use std::collections::{HashSet, HashMap};
-use db::{
+use steam_db::{
     game_target_store,
     achievement_store,
     game_cover_store,
+    excluded_achievement_store,
 };
 use rayon::prelude::*;
 use goals_lib::goals;

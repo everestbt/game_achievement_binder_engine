@@ -1,6 +1,6 @@
 use bytes::Bytes;
 use simple_error::{SimpleResult, SimpleError};
-use db::game_cover_store;
+use steam_db::game_cover_store;
 
 pub fn get_game_cover_blocking(app_id: &i32) -> SimpleResult<Bytes> {
     let url = if let Some(cover) = game_cover_store::get_game_cover(app_id).expect("Failed to load game cover database").map(|g| g.url) {

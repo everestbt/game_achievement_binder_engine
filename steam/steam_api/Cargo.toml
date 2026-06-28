@@ -6,7 +6,7 @@ description = "Library for accessing the steam API"
 
 
 [dependencies]
-db.workspace = true
+steam_db.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 reqwest.workspace = true

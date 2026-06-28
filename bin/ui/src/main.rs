@@ -18,7 +18,7 @@ use simple_error::{SimpleResult};
 use std::env;
 use std::collections::HashMap;
 use std::sync::LazyLock;
-use db::{
+use steam_db::{
     steam_id_store,
     game_target_store,
     excluded_achievement_store,

@@ -7,7 +7,7 @@ use iced::widget::{
     table, text, center_x, center_y, column, scrollable, image
 };
 use iced::{Center, Left, Font, Element};
-use db::{
+use steam_db::{
     achievement_store, 
 };
 use steam_api::game_fetch;

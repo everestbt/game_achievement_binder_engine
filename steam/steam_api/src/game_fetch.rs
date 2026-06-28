@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use db::request_store;
+use steam_db::request_store;
 
 // Owned Games Request
 #[derive(Debug, Serialize, Deserialize, Clone)]

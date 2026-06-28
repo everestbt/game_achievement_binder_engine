@@ -8,7 +8,7 @@ use iced::widget::{
     center_x, center_y, column, row, table, text, scrollable, button, checkbox, text_input
 };
 use iced::{Element, Font};
-use db::{
+use steam_db::{
     game_target_store,
 };
 use std::collections::HashSet;
