@@ -3,7 +3,7 @@ use super::App;
 use crate::{View, Message, OWNED_GAMES};
 
 use steam_api::game_cover_fetch;
-use goals_lib::goals;
+use steam_utils::goals;
 use iced::Element;
 use iced::widget::{
     column, row, text, image, image::Handle, grid, scrollable, center_x, button, progress_bar

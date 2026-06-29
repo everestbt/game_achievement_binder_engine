@@ -1,6 +1,6 @@
 use steam_api::{achievement_fetch::{GameAchievement}, game_fetch};
 use steam_db::{steam_id_store, achievement_store, excluded_achievement_store, request_store, game_completion_cache};
-use goals_lib::{goals};
+use steam_utils::{goals};
 
 use std::{collections::HashMap, env, io};
 use clap::Parser;

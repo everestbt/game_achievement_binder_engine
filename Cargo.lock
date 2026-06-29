@@ -713,11 +713,11 @@ version = "0.0.0"
 dependencies = [
  "chrono",
  "clap",
- "goals_lib",
  "rand 0.10.1",
  "reqwest",
  "steam_api",
  "steam_db",
+ "steam_utils",
  "tokio",
 ]
 
@@ -1617,15 +1617,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2c4ee00b289aba7a9e5306d57c2d05499b2e5dc427f84ac708bd2c090212cf3e"
 dependencies = [
  "gl_generator",
-]
-
-[[package]]
-name = "goals_lib"
-version = "0.0.0"
-dependencies = [
- "rand 0.10.1",
- "steam_api",
- "steam_db",
 ]
 
 [[package]]
@@ -4451,6 +4442,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "steam_utils"
+version = "0.0.0"
+dependencies = [
+ "rand 0.10.1",
+ "steam_api",
+ "steam_db",
+]
+
+[[package]]
 name = "strict-num"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4906,7 +4906,6 @@ version = "0.0.0"
 dependencies = [
  "bytes",
  "color-eyre",
- "goals_lib",
  "iced",
  "module",
  "rand 0.10.1",
@@ -4915,6 +4914,7 @@ dependencies = [
  "simple-error",
  "steam_api",
  "steam_db",
+ "steam_utils",
  "tokio",
 ]
 

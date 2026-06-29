@@ -24,7 +24,7 @@ use steam_db::{
     excluded_achievement_store,
     game_cover_store,
 };
-use goals_lib::goals;
+use steam_utils::goals;
 use game_view::{GameDisplay, GameGoalDisplay};
 use steam_api::achievement_fetch::GameAchievement;
 use trophy_case_view::{

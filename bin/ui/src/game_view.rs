@@ -21,7 +21,7 @@ use steam_db::{
     excluded_achievement_store,
 };
 use rayon::prelude::*;
-use goals_lib::goals;
+use steam_utils::goals;
 use simple_error::{SimpleError, SimpleResult};
 use module::Game;
 

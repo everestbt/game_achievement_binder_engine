@@ -2,7 +2,7 @@ use super::App;
 
 use crate::{Message, OWNED_GAMES};
 
-use goals_lib::goals;
+use steam_utils::goals;
 use iced::font;
 use iced::widget::{
     center_x, center_y, column, row, table, text, scrollable, button, checkbox, text_input
