@@ -177,7 +177,7 @@ impl App {
             Message::GoalsView => {
                 self.view = View::Goals;
                 if self.goals.is_none() {
-                    Task::perform(Goal::list(self.credentials.clone()), Message::GoalsLoaded)
+                    Task::perform(Goal::list(), Message::GoalsLoaded)
                 }
                 else {
                     Task::none()
@@ -204,7 +204,7 @@ impl App {
             Message::RandomAchievementGenerated(random_achievement) => {
                 if let Ok(r) = random_achievement {
                     let tasks = vec![
-                        Task::perform(Goal::list(self.credentials.clone()), Message::GoalsLoaded), 
+                        Task::perform(Goal::list(), Message::GoalsLoaded), 
                         Task::perform(game_view::load_game_display(self.credentials.clone(), r.0.id, r.0.name.clone()), Message::GameLoaded)
                     ];
                     self.handle_generated_random_achievement(r.0, r.1);

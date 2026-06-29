@@ -1,6 +1,6 @@
 use super::App;
 
-use crate::{Credentials, Message};
+use crate::{Message, OWNED_GAMES};
 
 use iced::font;
 use iced::widget::{
@@ -10,8 +10,6 @@ use iced::{Center, Left, Font, Element};
 use steam_db::{
     achievement_store, 
 };
-use steam_api::game_fetch;
-use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
 pub struct Goal {
@@ -25,16 +23,11 @@ pub struct Goal {
 }
 
 impl Goal {
-    pub async fn list(credentials: Credentials) -> Vec<Self> {
-        let game_map = game_fetch::get_owned_games(&credentials.key, &credentials.steam_id).await
-            .into_iter()
-            .map(|g| (g.appid, g))
-            .collect::<HashMap<_, _>>();
-
+    pub async fn list() -> Vec<Self> {
         let mut goals = achievement_store::get_achievements().expect("Failed to load achievements");
         goals.sort_by(|a, b| i32::cmp(&a.app_id,&b.app_id));
         goals.iter().map(|g| Goal {
-                game_name: game_map.get(&g.app_id).unwrap().name.clone(),
+                game_name: OWNED_GAMES.get(&g.app_id).unwrap().name.clone(),
                 display_name: g.display_name.clone(),
                 description: g.description.clone().unwrap_or("-".to_string()),
                 app_id: g.app_id,
