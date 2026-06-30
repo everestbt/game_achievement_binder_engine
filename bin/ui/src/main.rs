@@ -26,12 +26,14 @@ use steam_db::{
 };
 use steam_utils::goals;
 use game_view::{GameDisplay, GameGoalDisplay};
-use steam_api::achievement_fetch::GameAchievement;
 use trophy_case_view::{
     TrophyCaseFilter, 
     TotalAchievementProgress
 };
-use module::Game;
+use module::{
+    Game, 
+    GameAchievement
+};
 
 // We only need to load this once, do it statically so it can be shared between all threads
 pub static OWNED_GAMES: LazyLock<HashMap<i32, Game>> = LazyLock::new(|| {

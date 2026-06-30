@@ -9,10 +9,6 @@ use iced::widget::{
     center_x, center_y, column, text, button, table, scrollable, image, image::Handle, row, text_input
 };
 use iced::{Center, Left, Element, Font, font};
-use steam_api::{
-    achievement_fetch,
-    achievement_fetch::GameAchievement,
-};
 use std::collections::{HashSet, HashMap};
 use steam_db::{
     game_target_store,
@@ -21,9 +17,14 @@ use steam_db::{
     excluded_achievement_store,
 };
 use rayon::prelude::*;
-use steam_utils::goals;
 use simple_error::{SimpleError, SimpleResult};
-use module::Game;
+use module::{
+    Module, 
+    Game, 
+    GameAchievement, 
+    get_random_achievement_for_game, 
+    get_game_achievements,
+};
 
 #[derive(Debug, Clone)]
 pub struct GameDisplay {
@@ -53,8 +54,8 @@ pub struct GameGoalDisplay {
     // DATA
     pub goal_state: GoalState,
     pub achievement_name: String,
-    pub icon: String,
-    pub icon_gray: String,
+    pub icon: Option<String>,
+    pub icon_gray: Option<String>,
 }
 
 impl App {
@@ -172,8 +173,8 @@ impl App {
 
     pub fn handle_generated_random_achievement(&mut self, game: Game, random_achievement: Option<GameAchievement>) {
         if let Some(ra) = random_achievement {
-            achievement_store::save_achievement(&ra.name, &ra.display_name, &ra.description, &game.id, &(game.last_played.to_epoch_days() as i64 * 86400)).expect("Failed to save achievement");
-            if let Some(game_view) = self.game_views.get_mut(&game.id) && let Some(achievement) = game_view.goals.iter_mut().find(|a| a.achievement_name == ra.name) {
+            achievement_store::save_achievement(&ra.id, &ra.display_name, &ra.description, &game.id, &(game.last_played.to_epoch_days() as i64 * 86400)).expect("Failed to save achievement");
+            if let Some(game_view) = self.game_views.get_mut(&game.id) && let Some(achievement) = game_view.goals.iter_mut().find(|a| a.achievement_name == ra.id) {
                 achievement.goal_state = GoalState::Goal;
             }
         }
@@ -182,7 +183,7 @@ impl App {
 
 pub async fn generate_random_achievement(credentials: Credentials, app_id: i32) -> SimpleResult<(Game, Option<GameAchievement>)> {
     if let Some(game) = OWNED_GAMES.get(&app_id) {
-        Ok((game.clone(), goals::get_random_achievement_for_game(&credentials.key, &credentials.steam_id, &game.id).await))
+        Ok((game.clone(), get_random_achievement_for_game(Module::STEAM(credentials.key, credentials.steam_id), Some(game.id)).await))
     }
     else {
         Err(SimpleError::new("No game with that app_id"))
@@ -190,28 +191,22 @@ pub async fn generate_random_achievement(credentials: Credentials, app_id: i32) 
 }
 
 pub async fn load_game_display(credentials: Credentials, app_id: i32, game_name: String) -> GameDisplay {
-    let player_achievements = achievement_fetch::get_player_achievements(&credentials.key, &credentials.steam_id, &app_id).await;   
     let excluded_achievements: HashSet<String> = excluded_achievement_store::get_excluded_achievements_for_app(&app_id).expect("Failed to load excluded achievements")
         .iter()
         .map(|a| a.achievement_name.clone())
         .collect();
 
-    let mut goals: Vec<GameGoalDisplay> = achievement_fetch::get_game_achievements(&credentials.key, &app_id).await
+    let mut goals: Vec<GameGoalDisplay> = get_game_achievements(Module::STEAM(credentials.key, credentials.steam_id), Some(app_id)).await
         .par_iter()
         .map(|a| {
             let goal_state = {
-                if player_achievements.as_ref()
-                    .map(|p| p.achievements.iter()
-                        .find(|pa| pa.apiname == a.name)
-                        .map(|pa| pa.achieved == 1))
-                        .unwrap_or(None)
-                        .unwrap_or(false) {
+                if a.achieved {
                     GoalState::Complete
                 }
-                else if excluded_achievements.contains(&a.name) {
+                else if excluded_achievements.contains(&a.id) {
                     GoalState::Excluded
                 }
-                else if achievement_store::get_achievements_for_app(&app_id).expect("Failed to read achievement store").iter().any(|goal| goal.achievement_name == a.name) {
+                else if achievement_store::get_achievements_for_app(&app_id).expect("Failed to read achievement store").iter().any(|goal| goal.achievement_name == a.id) {
                     GoalState::Goal
                 }
                 else {
@@ -223,9 +218,9 @@ pub async fn load_game_display(credentials: Credentials, app_id: i32, game_name:
                 display_name : a.display_name.clone(),
                 description: a.description.clone().unwrap_or("-".to_string()),
                 goal_state,
-                achievement_name: a.name.clone(),
-                icon: a.icon.clone(),
-                icon_gray: a.icongray.clone(),
+                achievement_name: a.id.clone(),
+                icon: a.achieved_icon_id.clone(),
+                icon_gray: a.unachieved_icon_id.clone(),
             }
         })
         .collect();
@@ -246,10 +241,12 @@ pub async fn load_game_display(credentials: Credentials, app_id: i32, game_name:
 pub async fn load_all_goal_icons(app_id: i32, achievements: Vec<GameGoalDisplay>) -> HashMap<(i32, String), Handle> {
     let mut map = HashMap::new();
     for a in achievements {
-        if let Ok(r) = load_goal_icon(app_id, a.achievement_name, a.icon, a.icon_gray, a.goal_state).await {
-            map.insert((r.0, r.1), r.2);
+        if let Some(achieved_icon) = a.icon && let Some(unachieved_icon) = a.icon_gray {
+            if let Ok(r) = load_goal_icon(app_id, a.achievement_name, achieved_icon, unachieved_icon, a.goal_state).await {
+                map.insert((r.0, r.1), r.2);
+            }
+            // This drops the error, it will reload on a fresh request
         }
-        // This drops the error, it will reload on a fresh request
     }
     map
 }

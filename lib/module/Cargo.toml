@@ -7,3 +7,4 @@ description = "A library for generic actions that apply to any game modules"
 [dependencies]
 chrono.workspace = true
 steam_api.workspace = true
+steam_utils.workspace = true
