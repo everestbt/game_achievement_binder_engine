@@ -8,3 +8,5 @@ description = "A library for generic actions that apply to any game modules"
 chrono.workspace = true
 steam_api.workspace = true
 steam_utils.workspace = true
+simple-error.workspace = true
+bytes.workspace = true

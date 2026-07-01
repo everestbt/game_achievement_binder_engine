@@ -2,7 +2,6 @@ use super::App;
 
 use crate::{View, Message, OWNED_GAMES};
 
-use steam_api::game_cover_fetch;
 use steam_utils::goals;
 use iced::Element;
 use iced::widget::{
@@ -10,6 +9,10 @@ use iced::widget::{
 };
 use std::collections::HashMap;
 use rayon::prelude::*;
+use module::{
+    GameCoverRequest,
+    load_game_cover,
+};
 
 
 impl App {
@@ -128,7 +131,7 @@ pub async fn load_achievement_progress() -> TotalAchievementProgress {
 pub async fn load_game_covers(app_ids: Vec<i32>) -> HashMap<i32, Handle> {
     app_ids.par_iter()
         .map(|g| {
-            (*g, game_cover_fetch::get_game_cover_blocking(g).map(Handle::from_bytes))
+            (*g, load_game_cover(GameCoverRequest::Steam(*g)).map(Handle::from_bytes))
         })
         .filter(|t| t.1.is_ok())
         .map(|t| (t.0, t.1.expect("All none will be filtered out")))

@@ -3,9 +3,12 @@ use std::collections::HashSet;
 use steam_api::{
     game_fetch,
     achievement_fetch,
+    game_cover_fetch,
 };
 use chrono::{DateTime, NaiveDate};
 use steam_utils::goals;
+use simple_error::{SimpleResult};
+use bytes::Bytes;
 
 /// A list of all available modules that are supported
 #[derive(Debug, Clone)]
@@ -89,5 +92,17 @@ pub async fn get_game_achievements(module: Module, game_id: Option<i32>) -> Vec<
             
         },
         Module::MTGA => todo!()
+    }
+}
+
+pub enum GameCoverRequest {
+    Steam(i32), // game_id
+}
+
+pub fn load_game_cover(request: GameCoverRequest) -> SimpleResult<Bytes> {
+    match request {
+        GameCoverRequest::Steam(id) => {
+            game_cover_fetch::get_game_cover_blocking(&id)
+        }
     }
 }

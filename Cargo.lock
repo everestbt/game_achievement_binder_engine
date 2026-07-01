@@ -2651,7 +2651,9 @@ dependencies = [
 name = "module"
 version = "0.0.0"
 dependencies = [
+ "bytes",
  "chrono",
+ "simple-error",
  "steam_api",
  "steam_utils",
 ]
@@ -4913,7 +4915,6 @@ dependencies = [
  "rayon",
  "reqwest",
  "simple-error",
- "steam_api",
  "steam_db",
  "steam_utils",
  "tokio",
