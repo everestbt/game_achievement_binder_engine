@@ -10,3 +10,5 @@ steam_api.workspace = true
 steam_utils.workspace = true
 simple-error.workspace = true
 bytes.workspace = true
+preferences.workspace = true
+local_dir.workspace = true

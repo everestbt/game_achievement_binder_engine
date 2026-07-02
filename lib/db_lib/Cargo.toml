@@ -6,4 +6,4 @@ description = "A library for use with any database files"
 
 [dependencies]
 rusqlite.workspace = true
-directories.workspace = true
+local_dir.workspace = true

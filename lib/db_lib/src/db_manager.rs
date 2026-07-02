@@ -1,17 +1,10 @@
 use rusqlite::{Connection};
-use directories::{ProjectDirs};
-use std::fs;
+use local_dir::get_local_dir;
 
 static DATABASE_NAME: & str = "steam_randomiser_database.db";
 
 pub fn get_connection() -> Connection {
-    let binding = ProjectDirs::from("com", "everest", "steam_randomiser")
-        .expect("Failed to get project directories");
-    let data_dir =  binding.data_local_dir();
-    if !fs::exists(data_dir).expect("Failed to check for directory") {
-        fs::create_dir(data_dir).expect("Failed to create directory");
-    }
-    let path = data_dir.join(DATABASE_NAME);
+    let path = get_local_dir(DATABASE_NAME);
     let conn: Connection = Connection::open(path).expect("Failed to open a connection");
     conn
 }
