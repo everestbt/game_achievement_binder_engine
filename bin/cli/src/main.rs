@@ -1,6 +1,10 @@
 use steam_api::{achievement_fetch::{GameAchievement}, game_fetch};
 use steam_db::{steam_id_store, achievement_store, excluded_achievement_store, request_store, game_completion_cache};
 use steam_utils::{goals};
+use module::{
+    enable_module,
+    Module::STEAM,
+};
 
 use std::{collections::HashMap, env, io};
 use clap::Parser;
@@ -187,8 +191,8 @@ fn get_credentials(args: &Args) -> Credentials {
     }
     let key = key_var.unwrap();
 
-    let steam_id= if let Some(id) = &args.id {
-        steam_id_store::save_id(id).expect("Failed to save the id");
+    let steam_id = if let Some(id) = &args.id {
+        enable_module(STEAM(key.clone(), id.clone())).expect("Failed to save steam id");
         println!("Saved your steam id, no need to use --id each time now. You can replace it by using --id again.");
         id.clone()
     }

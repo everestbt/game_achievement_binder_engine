@@ -9,6 +9,11 @@ use chrono::{DateTime, NaiveDate};
 use steam_utils::goals;
 use simple_error::{SimpleResult};
 use bytes::Bytes;
+use preferences::{PreferencesMap, Preferences};
+use local_dir::get_local_dir;
+use std::fs::File;
+use anyhow::Result;
+use std::env;
 
 /// A list of all available modules that are supported
 #[derive(Debug, Clone)]
@@ -25,6 +30,35 @@ pub struct Game {
     pub name: String,
     pub playtime_forever: Option<u32>, // This is the number of minutes played
     pub last_played: NaiveDate,
+}
+
+pub fn enable_module(module: Module) -> Result<()> {
+    let mut settings: PreferencesMap<String> = PreferencesMap::new();
+    match module {
+        Module::STEAM(_, steam_id) => {
+            settings.insert("steam_id".into(), steam_id.into());
+        }
+        _ => todo!()
+    }
+
+    let path = get_local_dir("settings");
+    let mut writer = File::create(path)?;
+    
+    settings.save_to(&mut writer)?;
+    Ok(())
+}
+
+pub fn get_modules() -> Result<Vec<Module>> {
+    let path = get_local_dir("settings");
+    let mut reader = File::open(path)?;
+    let settings = PreferencesMap::<String>::load_from(&mut reader)?;
+
+    let mut modules = vec![];
+    if let Some(id) = settings.get("steam_id") {
+        let key = env::var("STEAM_API_KEY").expect("You need to set the environment variable STEAM_API_KEY with your API key");
+        modules.push(Module::STEAM(key, id.clone()));
+    }
+    Ok(modules)
 }
 
 pub async fn get_module_games(module: Module) -> Vec<Game> {

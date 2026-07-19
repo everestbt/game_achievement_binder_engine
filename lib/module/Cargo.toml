@@ -12,3 +12,4 @@ simple-error.workspace = true
 bytes.workspace = true
 preferences.workspace = true
 local_dir.workspace = true
+anyhow.workspace = true

@@ -732,6 +732,7 @@ version = "0.0.0"
 dependencies = [
  "chrono",
  "clap",
+ "module",
  "rand 0.10.2",
  "reqwest",
  "steam_api",
@@ -2695,6 +2696,7 @@ dependencies = [
 name = "module"
 version = "0.0.0"
 dependencies = [
+ "anyhow",
  "bytes",
  "chrono",
  "local_dir",
