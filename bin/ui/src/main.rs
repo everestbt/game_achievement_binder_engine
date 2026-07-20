@@ -15,11 +15,9 @@ use games_list_view::{
 };
 use goals_view::Goal;
 use simple_error::{SimpleResult};
-use std::env;
 use std::collections::HashMap;
 use std::sync::LazyLock;
 use steam_db::{
-    steam_id_store,
     game_target_store,
     excluded_achievement_store,
     game_cover_store,
@@ -34,16 +32,28 @@ use module::{
     Game, 
     GameAchievement
 };
+use anyhow::{
+    Result, 
+    anyhow,
+};
 
 // We only need to load this once, do it statically so it can be shared between all threads
 pub static OWNED_GAMES: LazyLock<HashMap<i32, Game>> = LazyLock::new(|| {
-        let key = env::var("STEAM_API_KEY").expect("You need to set the environment variable STEAM_API_KEY with your API key");
-        let steam_id = steam_id_store::get_id().expect("Failed to load steam-id, use the cli and supply a --id first");
+        let modules = module::get_modules().expect("Failed to load modules");
+        let mut owned_return : HashMap<i32, Game> = HashMap::new();
         let runtime = tokio::runtime::Runtime::new().expect("Unable to create a runtime");
-        // Sync and update all data
-        runtime.block_on(goals::sync_caches(&key, &steam_id));
-        let owned_games_vec = runtime.block_on(module::get_module_games(module::Module::STEAM(key, steam_id)));
-        owned_games_vec.iter().map(|g| (g.id, g.clone())).collect::<HashMap<_, _>>()
+        for m in modules {
+            match m {
+                module::Module::STEAM(key, steam_id) => {
+                    // Sync and update all data
+                    runtime.block_on(goals::sync_caches(&key, &steam_id));
+                    let owned_games_vec = runtime.block_on(module::get_module_games(module::Module::STEAM(key, steam_id)));
+                    owned_games_vec.iter().for_each(|g| {owned_return.insert(g.id.clone(), g.clone());});
+                },
+                _ => todo!()
+            }
+        }
+        owned_return
     }
 );
 
@@ -120,7 +130,7 @@ struct App {
 
 impl App {
     fn new() -> Self {
-        let credentials = load_credentials();
+        let credentials = load_credentials().expect("Failed to load credentials");
         tokio::runtime::Runtime::new().expect("Unable to create a runtime").block_on(sync_caches(credentials.clone())).expect("Failed to sync caches");
         Self {
             view: View::default(),
@@ -360,11 +370,20 @@ impl App {
     }
 }
 
-fn load_credentials() -> Credentials {
-    Credentials { 
-        key: env::var("STEAM_API_KEY").expect("You need to set the environment variable STEAM_API_KEY with your API key"),
-        steam_id: steam_id_store::get_id().expect("Failed to load steam-id, use the cli and supply a --id first")
+fn load_credentials() -> Result<Credentials> {
+    let modules = module::get_modules()?;
+    for m in modules {
+        match m {
+            module::Module::STEAM(key, steam_id) => {
+                return Ok(Credentials { 
+                    key: key.clone(),
+                    steam_id: steam_id.clone(),
+                })
+            },
+            _ => {}
+        }
     }
+    Err(anyhow!("Did not find steam credentials, run cli with a steam id first"))
 }
 
 async fn sync_caches(credentials: Credentials) -> SimpleResult<()> {

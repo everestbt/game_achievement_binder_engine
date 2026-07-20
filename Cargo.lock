@@ -730,6 +730,7 @@ checksum = "c8d4a3bb8b1e0c1050499d1815f5ab16d04f0959b233085fb31653fbfc9d98f9"
 name = "cli"
 version = "0.0.0"
 dependencies = [
+ "anyhow",
  "chrono",
  "clap",
  "module",
@@ -5036,6 +5037,7 @@ dependencies = [
 name = "ui"
 version = "0.0.0"
 dependencies = [
+ "anyhow",
  "bytes",
  "color-eyre",
  "iced",

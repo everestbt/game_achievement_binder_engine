@@ -1,13 +1,21 @@
 use steam_api::{achievement_fetch::{GameAchievement}, game_fetch};
-use steam_db::{steam_id_store, achievement_store, excluded_achievement_store, request_store, game_completion_cache};
+use steam_db::{
+    achievement_store, 
+    excluded_achievement_store, 
+    request_store, 
+    game_completion_cache,
+};
 use steam_utils::{goals};
 use module::{
     enable_module,
     Module::STEAM,
 };
-
 use std::{collections::HashMap, env, io};
 use clap::Parser;
+use anyhow::{
+    Result, 
+    anyhow,
+};
 
 // Command line arguments
 #[derive(Parser, Debug)]
@@ -60,11 +68,11 @@ struct Credentials {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), reqwest::Error> {
+async fn main() -> Result<()> {
     let args = Args::parse();
 
     if args.random_achievement {
-        let credentials = get_credentials(&args);
+        let credentials = get_credentials(&args)?;
         let game = request_game_name(&credentials.key, &credentials.steam_id).await.expect("No game found for search");
 
         let random_achievement: Option<GameAchievement> = goals::get_random_achievement_for_game(&credentials.key, &credentials.steam_id, &game.appid).await;
@@ -88,7 +96,7 @@ async fn main() -> Result<(), reqwest::Error> {
     }
     else if args.random_game {
         // Fetch games
-        let credentials = get_credentials(&args);
+        let credentials = get_credentials(&args)?;
         let mut owned_games: Vec<game_fetch::Game> = game_fetch::get_owned_games(&credentials.key, &credentials.steam_id).await;
         let mut game_and_achievement: Option<(game_fetch::Game, GameAchievement)> = None;
         while !owned_games.is_empty() {
@@ -122,7 +130,7 @@ async fn main() -> Result<(), reqwest::Error> {
         }
     }
     else if args.goals {
-        let credentials = get_credentials(&args);
+        let credentials = get_credentials(&args)?;
         let owned_games: HashMap<i32, game_fetch::Game> = game_fetch::get_owned_games(&credentials.key, &credentials.steam_id).await.iter().map(|n| (n.appid, n.clone())).collect();
         // Refresh caches and get goals
         goals::sync_caches(&credentials.key, &credentials.steam_id).await;
@@ -147,7 +155,7 @@ async fn main() -> Result<(), reqwest::Error> {
     }
     else if args.completed_games {
         // Get full game list
-        let credentials = get_credentials(&args);
+        let credentials = get_credentials(&args)?;
         let games: Vec<game_fetch::Game> = game_fetch::get_owned_games(&credentials.key, &credentials.steam_id).await;
         goals::sync_caches(&credentials.key, &credentials.steam_id).await;
         let completed_games = goals::get_game_completion();
@@ -160,7 +168,7 @@ async fn main() -> Result<(), reqwest::Error> {
     }
     else if args.game_completion_list {
         // Get full game list
-        let credentials = get_credentials(&args);
+        let credentials = get_credentials(&args)?;
         let games: Vec<game_fetch::Game> = game_fetch::get_owned_games(&credentials.key, &credentials.steam_id).await;
         goals::sync_caches(&credentials.key, &credentials.steam_id).await;
         let progressed_games = goals::get_game_completion();
@@ -184,23 +192,27 @@ async fn main() -> Result<(), reqwest::Error> {
     Ok(())
 }
 
-fn get_credentials(args: &Args) -> Credentials {
-    let key_var = env::var("STEAM_API_KEY");
-    if key_var.is_err() {
-        panic!("You need to set the environment variable STEAM_API_KEY with your API key")
-    }
-    let key = key_var.unwrap();
-
-    let steam_id = if let Some(id) = &args.id {
+fn get_credentials(args: &Args) -> Result<Credentials> {
+    if let Some(id) = &args.id {
+        let key_var = env::var("STEAM_API_KEY");
+        if key_var.is_err() {
+            panic!("You need to set the environment variable STEAM_API_KEY with your API key")
+        }
+        let key = key_var.unwrap();
         enable_module(STEAM(key.clone(), id.clone())).expect("Failed to save steam id");
         println!("Saved your steam id, no need to use --id each time now. You can replace it by using --id again.");
-        id.clone()
+        Ok(Credentials {key, steam_id: id.clone()})
     }
     else {
-        steam_id_store::get_id().expect("Failed to load a key, use --id first")
-    };
-
-    Credentials { key, steam_id }
+        let modules = module::get_modules().expect("Failed to load modules");
+        for m in modules {
+            match m {
+                STEAM(key, steam_id) => return Ok(Credentials { key, steam_id }),
+                _ => {}
+            }
+        }
+        Err(anyhow!("No steam crendentials to load, run with --id first"))
+    }
 }
 
 async fn request_game_name(key : &str, steam_id : &str) -> Option<game_fetch::Game> {
