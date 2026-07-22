@@ -1,5 +1,6 @@
-use std::collections::HashSet;
+pub mod game_cover;
 
+use std::collections::HashSet;
 use steam_api::{
     game_fetch,
     achievement_fetch,

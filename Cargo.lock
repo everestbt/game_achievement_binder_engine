@@ -2704,6 +2704,7 @@ dependencies = [
  "preferences",
  "simple-error",
  "steam_api",
+ "steam_db",
  "steam_utils",
 ]
 

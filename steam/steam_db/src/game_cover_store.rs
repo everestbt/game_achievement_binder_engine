@@ -30,7 +30,7 @@ pub fn get_game_cover(app_id: &i32) -> Result<Option<GameCover>> {
     }
 }
 
-pub fn save_game_cover(url: &String, app_id: &i32) -> Result<()> {
+pub fn save_game_cover(url: &str, app_id: &i32) -> Result<()> {
     let conn: Connection = db_manager::get_connection();
     create_table(&conn)?;
     

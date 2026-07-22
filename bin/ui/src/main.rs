@@ -20,7 +20,6 @@ use std::sync::LazyLock;
 use steam_db::{
     game_target_store,
     excluded_achievement_store,
-    game_cover_store,
 };
 use steam_utils::goals;
 use game_view::{GameDisplay, GameGoalDisplay};
@@ -30,7 +29,9 @@ use trophy_case_view::{
 };
 use module::{
     Game, 
-    GameAchievement
+    GameAchievement,
+    game_cover::save_game_cover,
+    Module,
 };
 use anyhow::{
     Result, 
@@ -331,7 +332,7 @@ impl App {
                     View::Game(app_id) => {
                         if let Some(game) = self.game_views.get_mut(&app_id) {
                             println!("Setting url {}", game.game_cover_url);
-                            game_cover_store::save_game_cover(&game.game_cover_url, &app_id).expect("Failed to save game cover");
+                            save_game_cover(Module::STEAM(self.credentials.key.clone(), self.credentials.steam_id.clone()), &app_id, &game.game_cover_url, ).expect("Failed to save game cover");
                             game.game_cover_edit = false;
                             Task::perform(trophy_case_view::load_game_covers(vec![app_id]), Message::GameCoversLoaded)
                         }

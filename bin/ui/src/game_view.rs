@@ -13,7 +13,6 @@ use std::collections::{HashSet, HashMap};
 use steam_db::{
     game_target_store,
     achievement_store,
-    game_cover_store,
     excluded_achievement_store,
 };
 use rayon::prelude::*;
@@ -24,6 +23,7 @@ use module::{
     GameAchievement, 
     get_random_achievement_for_game, 
     get_game_achievements,
+    game_cover::get_game_cover_url,
 };
 
 #[derive(Debug, Clone)]
@@ -195,8 +195,9 @@ pub async fn load_game_display(credentials: Credentials, app_id: i32, game_name:
         .iter()
         .map(|a| a.achievement_name.clone())
         .collect();
+    let steam_module = Module::STEAM(credentials.key, credentials.steam_id);
 
-    let mut goals: Vec<GameGoalDisplay> = get_game_achievements(Module::STEAM(credentials.key, credentials.steam_id), Some(app_id)).await
+    let mut goals: Vec<GameGoalDisplay> = get_game_achievements(steam_module.clone(), Some(app_id)).await
         .par_iter()
         .map(|a| {
             let goal_state = {
@@ -226,7 +227,7 @@ pub async fn load_game_display(credentials: Credentials, app_id: i32, game_name:
         .collect();
     goals.sort_by_key(|g| g.goal_state);
     let target = game_target_store::get_game_target(&app_id).expect("Failed to load target");
-    let game_cover_url = game_cover_store::get_game_cover(&app_id).expect("Failed to load game cover").map_or("".to_string(), |g| g.url);
+    let game_cover_url = get_game_cover_url(steam_module, &app_id).expect("Failed to load game cover").map_or("".to_string(), |g| g);
     GameDisplay { 
         app_id,
         game_name,
