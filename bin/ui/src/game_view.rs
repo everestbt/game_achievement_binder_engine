@@ -11,7 +11,6 @@ use iced::widget::{
 use iced::{Center, Left, Element, Font, font};
 use std::collections::{HashSet, HashMap};
 use steam_db::{
-    game_target_store,
     achievement_store,
     excluded_achievement_store,
 };
@@ -24,6 +23,10 @@ use module::{
     get_random_achievement_for_game, 
     get_game_achievements,
     game_cover::get_game_cover_url,
+    game_targets::{
+        get_game_target_status,
+        TargetStatus,
+    },
 };
 
 #[derive(Debug, Clone)]
@@ -226,14 +229,17 @@ pub async fn load_game_display(credentials: Credentials, app_id: i32, game_name:
         })
         .collect();
     goals.sort_by_key(|g| g.goal_state);
-    let target = game_target_store::get_game_target(&app_id).expect("Failed to load target");
+    let target = get_game_target_status(&steam_module, &app_id).expect("Failed to load game target");
     let game_cover_url = get_game_cover_url(steam_module, &app_id).expect("Failed to load game cover").map_or("".to_string(), |g| g);
     GameDisplay { 
         app_id,
         game_name,
         goals,
         target: target.is_some(),
-        complete: target.map(|t| t.complete).unwrap_or(false),
+        complete: target.map(|t| match t {
+                TargetStatus::Complete => true,
+                _ => false,
+            }).unwrap_or(false),
         game_cover_edit: false,
         game_cover_url,
     }

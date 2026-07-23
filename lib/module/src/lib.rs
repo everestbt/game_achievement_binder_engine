@@ -1,4 +1,5 @@
 pub mod game_cover;
+pub mod game_targets;
 
 use std::collections::HashSet;
 use steam_api::{
