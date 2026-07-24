@@ -1,6 +1,10 @@
 use super::App;
 
-use crate::{Message, OWNED_GAMES};
+use crate::{
+    Credentials, 
+    Message, 
+    OWNED_GAMES
+};
 
 use steam_utils::goals;
 use iced::font;
@@ -8,13 +12,17 @@ use iced::widget::{
     center_x, center_y, column, row, table, text, scrollable, button, checkbox, text_input
 };
 use iced::{Element, Font};
-use steam_db::{
-    game_target_store,
-};
 use std::collections::HashSet;
 use std::cmp::Reverse;
 use rayon::prelude::*;
-use module::Game;
+use module::{
+    Game,
+    Module,
+    game_targets::{
+        get_game_targets,
+        TargetStatus,
+    },
+};
 
 #[derive(Debug, Clone, Default, Eq, PartialEq, Hash)]
 pub enum GameListFilter {
@@ -42,13 +50,17 @@ pub struct GameListResult {
 }
 
 impl GameListDisplay {
-    pub async fn list(has_achievements: bool, filter: GameListFilter, title_search: Option<String>) -> GameListResult {
+    pub async fn list(credentials: Credentials, has_achievements: bool, filter: GameListFilter, title_search: Option<String>) -> GameListResult {
         let completed_games_cache = goals::get_game_completion();
         let progress_cache = goals::get_game_progress();
-        let target_set: HashSet<i32> = game_target_store::get_game_targets().expect("Failed to load targets")
+        let steam_module = Module::STEAM(credentials.key, credentials.steam_id);
+        let target_set: HashSet<i32> = get_game_targets(&steam_module).expect("Failed to load targets")
             .iter()
-            .filter(|t| !t.complete)
-            .map(|t| t.app_id)
+            .filter(|t| match t.status {
+                TargetStatus::Target => true,
+                _ => false
+            })
+            .map(|t| t.game_id)
             .collect();
 
         let owned_games_vec: Vec<&Game> = OWNED_GAMES.values().collect();

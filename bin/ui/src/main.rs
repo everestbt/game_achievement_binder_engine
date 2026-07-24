@@ -152,7 +152,7 @@ impl App {
         match message {
             Message::GamesView(filter) => {
                 self.view = View::Games(filter.clone());
-                Task::perform(GameListDisplay::list(self.games_have_achievements_filter, filter.clone(), Some(self.game_list_search.clone())), Message::GamesLoaded)
+                Task::perform(GameListDisplay::list(self.credentials.clone(), self.games_have_achievements_filter, filter.clone(), Some(self.game_list_search.clone())), Message::GamesLoaded)
             },
             Message::GamesLoaded(list_result) => {
                 self.games.insert((list_result.filter, list_result.has_achievements), list_result.list);
@@ -208,7 +208,7 @@ impl App {
                 self.games_have_achievements_filter = is_checked;
                 match &self.view {
                     View::Games(filter) => {
-                        Task::perform(GameListDisplay::list(self.games_have_achievements_filter, filter.clone(), Some(self.game_list_search.clone())), Message::GamesLoaded)
+                        Task::perform(GameListDisplay::list(self.credentials.clone(), self.games_have_achievements_filter, filter.clone(), Some(self.game_list_search.clone())), Message::GamesLoaded)
                     },
                     _ => Task::none()
                 }
@@ -290,7 +290,7 @@ impl App {
                 }
                 let mut tasks: Vec<Task<Message>> = vec![];
                 for k in self.games.keys() {
-                    tasks.push(Task::perform(GameListDisplay::list(k.1, k.0.clone(), Some(self.game_list_search.clone())), Message::GamesLoaded));
+                    tasks.push(Task::perform(GameListDisplay::list(self.credentials.clone(), k.1, k.0.clone(), Some(self.game_list_search.clone())), Message::GamesLoaded));
                 }
                 self.trophies = HashMap::new();
                 Task::batch(tasks)
@@ -300,7 +300,7 @@ impl App {
                 
                 match &self.view {
                     View::Games(filter) => {
-                        Task::perform(GameListDisplay::list(self.games_have_achievements_filter, filter.clone(), Some(self.game_list_search.clone())), Message::GamesLoaded)
+                        Task::perform(GameListDisplay::list(self.credentials.clone(), self.games_have_achievements_filter, filter.clone(), Some(self.game_list_search.clone())), Message::GamesLoaded)
                     },
                     _ => Task::none()
                 }
