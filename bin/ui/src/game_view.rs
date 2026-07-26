@@ -12,7 +12,6 @@ use iced::{Center, Left, Element, Font, font};
 use std::collections::{HashSet, HashMap};
 use steam_db::{
     achievement_store,
-    excluded_achievement_store,
 };
 use rayon::prelude::*;
 use simple_error::{SimpleError, SimpleResult};
@@ -27,6 +26,7 @@ use module::{
         get_game_target_status,
         TargetStatus,
     },
+    achievements::get_excluded_achievements,
 };
 
 #[derive(Debug, Clone)]
@@ -194,10 +194,8 @@ pub async fn generate_random_achievement(credentials: Credentials, app_id: i32) 
 }
 
 pub async fn load_game_display(credentials: Credentials, app_id: i32, game_name: String) -> GameDisplay {
-    let excluded_achievements: HashSet<String> = excluded_achievement_store::get_excluded_achievements_for_app(&app_id).expect("Failed to load excluded achievements")
-        .iter()
-        .map(|a| a.achievement_name.clone())
-        .collect();
+    let steam_module = Module::STEAM(credentials.key.clone(), credentials.steam_id.clone());
+    let excluded_achievements: HashSet<String> = get_excluded_achievements(&steam_module, &app_id).expect("Failed to load excluded achievements");
     let steam_module = Module::STEAM(credentials.key, credentials.steam_id);
 
     let mut goals: Vec<GameGoalDisplay> = get_game_achievements(steam_module.clone(), Some(app_id)).await
