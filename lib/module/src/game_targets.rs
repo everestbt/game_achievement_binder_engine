@@ -40,6 +40,19 @@ pub fn get_game_targets(module: &Module) -> Result<Vec<GameTarget>> {
     }
 }
 
+pub fn save_game_target(module: &Module, game_id: &i32, status: TargetStatus) -> Result<()> {
+    match module {
+        Module::STEAM(_, _) => {
+            game_target_store::save_game_target(game_id, match status {
+                TargetStatus::Target => &false,
+                TargetStatus::Complete => &true
+            })?
+        },
+        _ => todo!()
+    }
+    Ok(())
+}
+
 fn steam_status_to_module_status(complete: &bool) -> TargetStatus {
     if *complete {
         TargetStatus::Complete

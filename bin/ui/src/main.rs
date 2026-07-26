@@ -18,7 +18,6 @@ use simple_error::{SimpleResult};
 use std::collections::HashMap;
 use std::sync::LazyLock;
 use steam_db::{
-    game_target_store,
     excluded_achievement_store,
 };
 use steam_utils::goals;
@@ -32,6 +31,10 @@ use module::{
     GameAchievement,
     game_cover::save_game_cover,
     Module,
+    game_targets::{
+        save_game_target,
+        TargetStatus,
+    }
 };
 use anyhow::{
     Result, 
@@ -228,14 +231,16 @@ impl App {
                 }
             },
             Message::SetAsGameTarget(app_id) => {
-                game_target_store::save_game_target(&app_id, &false).expect("Failed to save target");
+                let steam_module = Module::STEAM(self.credentials.key.clone(), self.credentials.steam_id.clone());
+                save_game_target(&steam_module, &app_id, TargetStatus::Target).expect("Failed to save target");
                 if let Some(view) = self.game_views.get_mut(&app_id) {
                     view.target = true;
                 }
                 Task::perform(sync_caches(self.credentials.clone()), Message::CachesSynced)
             },
             Message::SetGameAsComplete(app_id) => {
-                game_target_store::save_game_target(&app_id, &true).expect("Failed to save target");
+                let steam_module = Module::STEAM(self.credentials.key.clone(), self.credentials.steam_id.clone());
+                save_game_target(&steam_module, &app_id, TargetStatus::Complete).expect("Failed to save target");
                 if let Some(view) = self.game_views.get_mut(&app_id) {
                     view.complete = true;
                 }
