@@ -16,3 +16,13 @@ pub fn get_excluded_achievements(module: &Module, game_id: &i32) -> Result<HashS
         _ => todo!()
     }
 }
+
+pub fn save_excluded_achievement(module: &Module, game_id: &i32, achievement_name: &str) -> Result<()> {
+    match module {
+        Module::STEAM(_, _) => {
+            excluded_achievement_store::save_excluded_achievement(achievement_name, game_id)?
+        },
+        _ => todo!()
+    }
+    Ok(())
+}

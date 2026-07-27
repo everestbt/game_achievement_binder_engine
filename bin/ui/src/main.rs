@@ -17,9 +17,6 @@ use goals_view::Goal;
 use simple_error::{SimpleResult};
 use std::collections::HashMap;
 use std::sync::LazyLock;
-use steam_db::{
-    excluded_achievement_store,
-};
 use steam_utils::goals;
 use game_view::{GameDisplay, GameGoalDisplay};
 use trophy_case_view::{
@@ -34,7 +31,8 @@ use module::{
     game_targets::{
         save_game_target,
         TargetStatus,
-    }
+    },
+    achievements::save_excluded_achievement,
 };
 use anyhow::{
     Result, 
@@ -252,7 +250,8 @@ impl App {
                 Task::perform(game_view::load_game_display(self.credentials.clone(), random_game_id, OWNED_GAMES.get(&random_game_id).expect("Does not exist").name.clone()), Message::GameLoaded)
             },
             Message::ExcludeAchievement(app_id, achievement_name) => {
-                excluded_achievement_store::save_excluded_achievement(&achievement_name, &app_id).expect("Failed to exclude achievement");
+                let steam_module = Module::STEAM(self.credentials.key.clone(), self.credentials.steam_id.clone());
+                save_excluded_achievement(&steam_module, &app_id, &achievement_name).expect("Failed to exclude achievement");
                 let tasks = vec![
                     Task::perform(game_view::load_game_display(self.credentials.clone(), app_id, OWNED_GAMES.get(&app_id).expect("Does not exist").name.clone()), Message::GameLoaded),
                     Task::perform(sync_caches(self.credentials.clone()), Message::CachesSynced)

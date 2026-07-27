@@ -48,7 +48,7 @@ pub fn get_excluded_achievements_for_app(app_id: &i32) -> Result<Vec<ExcludedAch
     Ok(achievement_vec)
 }
 
-pub fn save_excluded_achievement(achievement_name: &String, app_id: &i32) -> Result<()> {
+pub fn save_excluded_achievement(achievement_name: &str, app_id: &i32) -> Result<()> {
     // Connect to SQLite database (creates the file if it doesn't exist)
     let conn: Connection = db_manager::get_connection();
     create_table(&conn)?;
