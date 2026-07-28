@@ -10,9 +10,6 @@ use iced::widget::{
 };
 use iced::{Center, Left, Element, Font, font};
 use std::collections::{HashSet, HashMap};
-use steam_db::{
-    achievement_store,
-};
 use rayon::prelude::*;
 use simple_error::{SimpleError, SimpleResult};
 use module::{
@@ -26,7 +23,12 @@ use module::{
         get_game_target_status,
         TargetStatus,
     },
-    achievements::get_excluded_achievements,
+    achievements::{
+        ModuleGoal,
+        get_game_goals,
+        get_excluded_achievements,
+        save_achievement_goal,
+    },
 };
 
 #[derive(Debug, Clone)]
@@ -176,7 +178,8 @@ impl App {
 
     pub fn handle_generated_random_achievement(&mut self, game: Game, random_achievement: Option<GameAchievement>) {
         if let Some(ra) = random_achievement {
-            achievement_store::save_achievement(&ra.id, &ra.display_name, &ra.description, &game.id, &(game.last_played.to_epoch_days() as i64 * 86400)).expect("Failed to save achievement");
+            let steam_achievement = ModuleGoal::STEAM(ra.id.clone(), ra.display_name.clone(), ra.description.clone(), game.id.clone(), game.last_played.to_epoch_days() as i64 * 86400);
+            save_achievement_goal(steam_achievement).expect("Failed to save achievement");
             if let Some(game_view) = self.game_views.get_mut(&game.id) && let Some(achievement) = game_view.goals.iter_mut().find(|a| a.achievement_name == ra.id) {
                 achievement.goal_state = GoalState::Goal;
             }
@@ -208,7 +211,11 @@ pub async fn load_game_display(credentials: Credentials, app_id: i32, game_name:
                 else if excluded_achievements.contains(&a.id) {
                     GoalState::Excluded
                 }
-                else if achievement_store::get_achievements_for_app(&app_id).expect("Failed to read achievement store").iter().any(|goal| goal.achievement_name == a.id) {
+                else if get_game_goals(&steam_module, &app_id).expect("Failed to read goals").iter().any(|goal| {
+                    match goal {
+                        ModuleGoal::STEAM(name, _, _, _, _) => *name == a.id
+                    }
+                }) {
                     GoalState::Goal
                 }
                 else {
