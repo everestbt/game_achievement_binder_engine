@@ -13,7 +13,6 @@ pub fn get_game_target_status(module: &Module, game_id: &i32) -> Result<Option<T
         &Module::STEAM(_, _) => {
             Ok(game_target_store::get_game_target(game_id)?.map(|t| steam_status_to_module_status(&t.complete)))
         },
-        _ => todo!()
     }
 }
 
@@ -36,7 +35,6 @@ pub fn get_game_targets(module: &Module) -> Result<Vec<GameTarget>> {
                 })
                 .collect())
         },
-        _ => todo!()
     }
 }
 
@@ -48,7 +46,6 @@ pub fn save_game_target(module: &Module, game_id: &i32, status: TargetStatus) ->
                 TargetStatus::Complete => &true
             })?
         },
-        _ => todo!()
     }
     Ok(())
 }

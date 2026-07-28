@@ -52,7 +52,6 @@ pub static OWNED_GAMES: LazyLock<HashMap<i32, Game>> = LazyLock::new(|| {
                     let owned_games_vec = runtime.block_on(module::get_module_games(module::Module::STEAM(key, steam_id)));
                     owned_games_vec.iter().for_each(|g| {owned_return.insert(g.id.clone(), g.clone());});
                 },
-                _ => todo!()
             }
         }
         owned_return
@@ -385,7 +384,6 @@ fn load_credentials() -> Result<Credentials> {
                     steam_id: steam_id.clone(),
                 })
             },
-            _ => {}
         }
     }
     Err(anyhow!("Did not find steam credentials, run cli with a steam id first"))

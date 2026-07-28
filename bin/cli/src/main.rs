@@ -208,7 +208,6 @@ fn get_credentials(args: &Args) -> Result<Credentials> {
         for m in modules {
             match m {
                 STEAM(key, steam_id) => return Ok(Credentials { key, steam_id }),
-                _ => {}
             }
         }
         Err(anyhow!("No steam crendentials to load, run with --id first"))

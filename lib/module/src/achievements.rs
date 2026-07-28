@@ -27,8 +27,7 @@ pub fn get_game_goals(module: &Module, game_id: &i32) -> Result<Vec<ModuleGoal>>
                 .iter()
                 .map(|a| ModuleGoal::STEAM(a.achievement_name.clone(), a.display_name.clone(), a.description.clone(), a.app_id, a.last_played))
                 .collect())
-        },
-        _ => todo!()
+        }
     }
 }
 
@@ -41,7 +40,6 @@ pub fn get_excluded_achievements(module: &Module, game_id: &i32) -> Result<HashS
                 .collect()
             )
         }
-        _ => todo!()
     }
 }
 
@@ -49,8 +47,7 @@ pub fn save_excluded_achievement(module: &Module, game_id: &i32, achievement_nam
     match module {
         Module::STEAM(_, _) => {
             excluded_achievement_store::save_excluded_achievement(achievement_name, game_id)?
-        },
-        _ => todo!()
+        }
     }
     Ok(())
 }

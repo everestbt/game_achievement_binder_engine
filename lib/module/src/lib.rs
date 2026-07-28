@@ -22,7 +22,6 @@ use std::env;
 #[derive(Debug, Clone)]
 pub enum Module {
     STEAM(String, String), // key, Steam-id
-    MTGA,
 }
 
 /// The generic interface for a game definition
@@ -41,7 +40,6 @@ pub fn enable_module(module: Module) -> Result<()> {
         Module::STEAM(_, steam_id) => {
             settings.insert("steam_id".into(), steam_id.into());
         }
-        _ => todo!()
     }
 
     let path = get_local_dir("settings");
@@ -78,7 +76,6 @@ pub async fn get_module_games(module: Module) -> Vec<Game> {
             })
             .collect()
         }
-        Module::MTGA => todo!()
     }
 }
 /// Generic interface for achievements in games
@@ -98,7 +95,6 @@ pub async fn get_random_achievement_for_game(module: Module, game_id: Option<i32
             goals::get_random_achievement_for_game(&key, &steam_id, &game_id.expect("A game id must be provided for steam"))
                 .await.map(|g| GameAchievement { id: g.name, display_name: g.display_name, description: g.description, achieved: false, achieved_icon_id: Some(g.icon), unachieved_icon_id: Some(g.icongray) })
         },
-        Module::MTGA => todo!()
     }
 }
 
@@ -128,7 +124,6 @@ pub async fn get_game_achievements(module: Module, game_id: Option<i32>) -> Vec<
                 .collect()
             
         },
-        Module::MTGA => todo!()
     }
 }
 
