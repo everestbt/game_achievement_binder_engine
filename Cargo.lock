@@ -5047,7 +5047,6 @@ dependencies = [
  "rayon",
  "reqwest",
  "simple-error",
- "steam_db",
  "steam_utils",
  "tokio",
 ]

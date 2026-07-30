@@ -30,6 +30,7 @@ use module::{
         save_achievement_goal,
     },
 };
+use steam_utils::SteamAchievement;
 
 #[derive(Debug, Clone)]
 pub struct GameDisplay {
@@ -178,7 +179,13 @@ impl App {
 
     pub fn handle_generated_random_achievement(&mut self, game: Game, random_achievement: Option<GameAchievement>) {
         if let Some(ra) = random_achievement {
-            let steam_achievement = ModuleGoal::STEAM(ra.id.clone(), ra.display_name.clone(), ra.description.clone(), game.id.clone(), game.last_played.to_epoch_days() as i64 * 86400);
+            let steam_achievement = ModuleGoal::STEAM(SteamAchievement { 
+                achievement_name: ra.id.clone(), 
+                display_name: ra.display_name.clone(), 
+                description: ra.description.clone(), 
+                game_id: game.id.clone(), 
+                last_played: game.last_played.to_epoch_days() as i64 * 86400 
+            });
             save_achievement_goal(steam_achievement).expect("Failed to save achievement");
             if let Some(game_view) = self.game_views.get_mut(&game.id) && let Some(achievement) = game_view.goals.iter_mut().find(|a| a.achievement_name == ra.id) {
                 achievement.goal_state = GoalState::Goal;
@@ -213,7 +220,7 @@ pub async fn load_game_display(credentials: Credentials, app_id: i32, game_name:
                 }
                 else if get_game_goals(&steam_module, &app_id).expect("Failed to read goals").iter().any(|goal| {
                     match goal {
-                        ModuleGoal::STEAM(name, _, _, _, _) => *name == a.id
+                        ModuleGoal::STEAM(steam_achievement) => *steam_achievement.achievement_name == a.id
                     }
                 }) {
                     GoalState::Goal

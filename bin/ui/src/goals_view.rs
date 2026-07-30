@@ -1,14 +1,22 @@
 use super::App;
 
-use crate::{Message, OWNED_GAMES};
+use crate::{
+    Credentials,
+    Message, 
+    OWNED_GAMES
+};
 
 use iced::font;
 use iced::widget::{
     table, text, center_x, center_y, column, scrollable, image
 };
 use iced::{Center, Left, Font, Element};
-use steam_db::{
-    achievement_store, 
+use module::{
+    Module,
+    achievements::{
+        ModuleGoal,
+        get_goals,
+    }
 };
 
 #[derive(Debug, Clone)]
@@ -23,15 +31,21 @@ pub struct Goal {
 }
 
 impl Goal {
-    pub async fn list() -> Vec<Self> {
-        let mut goals = achievement_store::get_achievements().expect("Failed to load achievements");
-        goals.sort_by(|a, b| i32::cmp(&a.app_id,&b.app_id));
-        goals.iter().map(|g| Goal {
-                game_name: OWNED_GAMES.get(&g.app_id).unwrap().name.clone(),
-                display_name: g.display_name.clone(),
-                description: g.description.clone().unwrap_or("-".to_string()),
-                app_id: g.app_id,
-                achievement_name: g.achievement_name.clone(),
+    pub async fn list(credentials: Credentials) -> Vec<Self> {
+        let steam_module = Module::STEAM(credentials.key.clone(), credentials.steam_id.clone());
+        let mut goals = get_goals(&steam_module).expect("Failed to load achievements");
+        goals.sort();
+        goals.iter().map(|g| 
+            match g {
+                ModuleGoal::STEAM(a) => {
+                    Goal {
+                        game_name: OWNED_GAMES.get(&a.game_id).unwrap().name.clone(),
+                        display_name: a.display_name.clone(),
+                        description: a.description.clone().unwrap_or("-".to_string()),
+                        app_id: a.game_id,
+                        achievement_name: a.achievement_name.clone(),
+                    }
+                }
             })
             .collect()
     }

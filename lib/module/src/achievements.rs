@@ -6,18 +6,37 @@ use steam_db::{
     achievement_store,
 };
 use anyhow::Result;
+use steam_utils::SteamAchievement;
 
+#[derive(Eq, PartialEq, Ord, PartialOrd)]
 pub enum ModuleGoal {
-    STEAM(String, String, Option<String>, i32, i64) // achievement_name, display_name, description, game_id, last_played
+    STEAM(SteamAchievement) 
 }
 
 pub fn save_achievement_goal(achievement: ModuleGoal) -> Result<()> {
     match achievement {
-        ModuleGoal::STEAM(achievement_name, display_name, description, game_id, last_played) => {
-            achievement_store::save_achievement(&achievement_name, &display_name, &description, &game_id, &last_played)?
+        ModuleGoal::STEAM(achievement) => {
+            achievement_store::save_achievement(&achievement.achievement_name, &achievement.display_name, &achievement.description, &achievement.game_id, &achievement.last_played)?
         }
     }
     Ok(())
+}
+
+pub fn get_goals(module: &Module) -> Result<Vec<ModuleGoal>> {
+    match module {
+        Module::STEAM(_, _) => {
+            Ok(achievement_store::get_achievements()?
+                .iter()
+                .map(|a| ModuleGoal::STEAM(SteamAchievement { 
+                    achievement_name: a.achievement_name.clone(), 
+                    display_name: a.display_name.clone(), 
+                    description: a.description.clone(), 
+                    game_id: a.app_id, 
+                    last_played: a.last_played 
+                }))
+                .collect())
+        }
+    }
 }
 
 pub fn get_game_goals(module: &Module, game_id: &i32) -> Result<Vec<ModuleGoal>> {
@@ -25,7 +44,13 @@ pub fn get_game_goals(module: &Module, game_id: &i32) -> Result<Vec<ModuleGoal>>
         Module::STEAM(_, _) => {
             Ok(achievement_store::get_achievements_for_app(game_id)?
                 .iter()
-                .map(|a| ModuleGoal::STEAM(a.achievement_name.clone(), a.display_name.clone(), a.description.clone(), a.app_id, a.last_played))
+                .map(|a| ModuleGoal::STEAM(SteamAchievement { 
+                    achievement_name: a.achievement_name.clone(), 
+                    display_name: a.display_name.clone(), 
+                    description: a.description.clone(), 
+                    game_id: a.app_id, 
+                    last_played: a.last_played 
+                }))
                 .collect())
         }
     }
