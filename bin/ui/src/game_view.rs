@@ -31,6 +31,7 @@ use module::{
     },
 };
 use steam_utils::SteamAchievement;
+use futures::future::join_all;
 
 #[derive(Debug, Clone)]
 pub struct GameDisplay {
@@ -258,9 +259,15 @@ pub async fn load_game_display(credentials: Credentials, app_id: i32, game_name:
 }
 
 pub async fn load_all_goal_icons(app_id: i32, achievements: Vec<GameGoalDisplay>) -> HashMap<(i32, String), Handle> {
-    let mut map = HashMap::new();
+    let mut loading_vec = vec![];
     for a in achievements {
-        if let Some(achieved_icon) = a.icon && let Some(unachieved_icon) = a.icon_gray && let Ok(r) = load_goal_icon(app_id, a.achievement_name, achieved_icon, unachieved_icon, a.goal_state).await {
+        if let Some(achieved_icon) = a.icon && let Some(unachieved_icon) = a.icon_gray  {
+            loading_vec.push(load_goal_icon(app_id, a.achievement_name, achieved_icon, unachieved_icon, a.goal_state));
+        }
+    }
+    let mut map = HashMap::new();
+    for loaded in join_all(loading_vec).await {
+        if let Ok(r) = loaded {
             map.insert((r.0, r.1), r.2);
         }
         // This drops the error, it will reload on a fresh request
