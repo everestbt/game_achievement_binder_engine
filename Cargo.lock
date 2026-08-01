@@ -2595,6 +2595,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "112b39cec0b298b6c1999fee3e31427f74f676e4cb9879ed1a121b43661a4154"
 
 [[package]]
+name = "magic_the_gathering_arena_log_reader"
+version = "0.0.0"
+dependencies = [
+ "convert_case",
+ "directories",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "magic_the_gathering_arena_utils"
+version = "0.0.0"
+
+[[package]]
 name = "malloc_buf"
 version = "0.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2715,16 +2729,6 @@ checksum = "bb85c154ba489f01b25c0d36ae69a87e4a1c73a72631fc6c0eb6dde34a73e44b"
 dependencies = [
  "num-traits",
  "pxfm",
-]
-
-[[package]]
-name = "mtga_log_reader"
-version = "0.0.0"
-dependencies = [
- "convert_case",
- "directories",
- "serde",
- "serde_json",
 ]
 
 [[package]]

@@ -1,5 +1,5 @@
 [package]
-name = "mtga_log_reader"
+name = "magic_the_gathering_arena_log_reader"
 version = "0.0.0"
 edition = "2024"
 description = "A library used for accessing the MTGA local log files"

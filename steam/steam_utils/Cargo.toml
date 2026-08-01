@@ -2,7 +2,7 @@
 name = "steam_utils"
 version = "0.0.0"
 edition = "2024"
-description = "A library for goals actions"
+description = "A library for steam goals actions"
 
 [dependencies]
 steam_api.workspace=true
