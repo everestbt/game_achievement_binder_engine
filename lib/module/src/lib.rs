@@ -102,7 +102,7 @@ pub async fn get_game_achievements(module: Module, game_id: Option<i32>) -> Vec<
     match module {
         Module::STEAM(key, steam_id) => {
             let app_id = &game_id.expect("A game id must be provided for steam");
-            let achieved_set: HashSet<String> = if let Some(player) = achievement_fetch::get_player_achievements(&key, &steam_id, &app_id).await {
+            let achieved_set: HashSet<String> = if let Some(player) = achievement_fetch::get_player_achievements(&key, &steam_id, &app_id).await.expect("Failed to load") {
                 player.achievements.iter()
                     .filter(|a| a.achieved == 1)
                     .map(|a| a.apiname.clone())
@@ -111,7 +111,7 @@ pub async fn get_game_achievements(module: Module, game_id: Option<i32>) -> Vec<
             else {
                 HashSet::new()
             };  
-            achievement_fetch::get_game_achievements(&key, &app_id).await
+            achievement_fetch::get_game_achievements(&key, &app_id).await.expect("Failed to load")
                 .iter()
                 .map(|g| GameAchievement { 
                     id: g.name.clone(), 

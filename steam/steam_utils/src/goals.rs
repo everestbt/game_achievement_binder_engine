@@ -12,10 +12,10 @@ use rand::prelude::*;
 
 pub async fn get_random_achievement_for_game(key : &str, steam_id : &str, game_id: &i32) -> Option<GameAchievement> {
     // Get the achievements for a specific game
-        let achievements = achievement_fetch::get_player_achievements(key, steam_id, &game_id).await;
+        let achievements = achievement_fetch::get_player_achievements(key, steam_id, &game_id).await.expect("Failed to load");
         if let Some(a) = achievements {
             // Get details of the achievements
-            let achievements: Vec<achievement_fetch::GameAchievement> = achievement_fetch::get_game_achievements(key, &game_id).await;
+            let achievements: Vec<achievement_fetch::GameAchievement> = achievement_fetch::get_game_achievements(key, &game_id).await.expect("Failed to load game achievements");
 
             // Load currently listed achievements
             let current_goals_for_app: Vec<achievement_store::Achievement> = achievement_store::get_achievements_for_app(&game_id).expect("Failed to load current goals");
@@ -65,7 +65,7 @@ async fn sync_completed_achievements(key : &str, steam_id : &str) {
                 a
             }
             else {
-                let player = achievement_fetch::get_player_achievements(key, steam_id, &a.app_id).await.expect("Somehow a game with no achievements has ended up with one?!?");
+                let player = achievement_fetch::get_player_achievements(key, steam_id, &a.app_id).await.expect("Failed to load").expect("Somehow a game with no achievements has ended up with one?!?");
                 app_player_achievement_map.insert(a.app_id, player);
                 app_player_achievement_map.get(&a.app_id).unwrap()
             };
@@ -97,7 +97,7 @@ async fn refresh_game_achievement_cache(key : &str, steam_id : &str) {
         }
         // Get the achievements completed for that game
         // When not present, the game has no achievements, include with zeroes
-        let player_achievements = achievement_fetch::get_player_achievements(key, steam_id, &game.appid).await;
+        let player_achievements = achievement_fetch::get_player_achievements(key, steam_id, &game.appid).await.expect("Failed to load");
         if let Some(achievements) = player_achievements.map(|p| p.achievements) {
             game_completion_cache::save_game_completion(
                 &game.appid, 
@@ -123,7 +123,7 @@ async fn sync_excluded_achievements(key : &str, steam_id : &str) {
             loaded
         }
         else {
-            let player_achievements = achievement_fetch::get_player_achievements(key, steam_id, &e.app_id).await.expect("Game should have achievements if exclusions exist");
+            let player_achievements = achievement_fetch::get_player_achievements(key, steam_id, &e.app_id).await.expect("Failed to load").expect("Game should have achievements if exclusions exist");
             game_map.insert(e.app_id, player_achievements);
             game_map.get(&e.app_id).unwrap()
         };

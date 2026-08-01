@@ -12,3 +12,4 @@ serde_json.workspace = true
 reqwest.workspace = true
 bytes.workspace = true
 simple-error.workspace = true
+anyhow.workspace = true
