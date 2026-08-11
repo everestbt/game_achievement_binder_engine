@@ -10,7 +10,8 @@ use iced::widget::{
 use std::collections::HashMap;
 use rayon::prelude::*;
 use module::{
-    GameCoverRequest,
+    GameIdentifier, 
+    Module, 
     load_game_cover,
 };
 
@@ -92,17 +93,25 @@ pub enum TrophyCaseFilter {
     Perfected,
 }
 
-pub async fn load_trophies(view: TrophyCaseFilter) -> (TrophyCaseFilter, Vec<i32>) {
-    (view.clone(), goals::get_game_completion()
-        .iter()
-        .filter(|c| {
-            match view {
-                TrophyCaseFilter::Completed => c.1.complete,
-                TrophyCaseFilter::Perfected => c.1.perfect,
+pub async fn load_trophies(modules: Vec<Module>, view: TrophyCaseFilter) -> (TrophyCaseFilter, Vec<GameIdentifier>) {
+    let mut vec = Vec::new();
+    for m in modules {
+        match m {
+            Module::STEAM(_) => {
+                vec.append(&mut goals::get_game_completion()
+                    .iter()
+                    .filter(|c| {
+                        match view {
+                            TrophyCaseFilter::Completed => c.1.complete,
+                            TrophyCaseFilter::Perfected => c.1.perfect,
+                        }
+                    }) 
+                    .map(|c| GameIdentifier{ module: m.clone(), id: *c.0})
+                    .collect())
             }
-        }) 
-        .map(|c| *c.0)
-        .collect())
+        }
+    };
+    (view.clone(), vec)
 }
 
 #[derive(Debug, Clone)]
@@ -128,10 +137,10 @@ pub async fn load_achievement_progress() -> TotalAchievementProgress {
     }
 }
 
-pub async fn load_game_covers(app_ids: Vec<i32>) -> HashMap<i32, Handle> {
-    app_ids.par_iter()
+pub async fn load_game_covers(ids: Vec<GameIdentifier>) -> HashMap<GameIdentifier, Handle> {
+    ids.par_iter()
         .map(|g| {
-            (*g, load_game_cover(GameCoverRequest::Steam(*g)).map(Handle::from_bytes))
+            (g.clone(), load_game_cover(&g).map(Handle::from_bytes))
         })
         .filter(|t| t.1.is_ok())
         .map(|t| (t.0, t.1.expect("All none will be filtered out")))

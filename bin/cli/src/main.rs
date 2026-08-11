@@ -7,8 +7,9 @@ use steam_db::{
 };
 use steam_utils::{goals};
 use module::{
+    ModuleEnable,
+    SteamEnable, 
     enable_module,
-    Module::STEAM,
 };
 use std::{collections::HashMap, env, io};
 use clap::Parser;
@@ -199,18 +200,12 @@ fn get_credentials(args: &Args) -> Result<Credentials> {
             panic!("You need to set the environment variable STEAM_API_KEY with your API key")
         }
         let key = key_var.unwrap();
-        enable_module(STEAM(key.clone(), id.clone())).expect("Failed to save steam id");
+        enable_module(ModuleEnable::STEAM(SteamEnable::new(id.clone()))).expect("Failed to save steam id");
         println!("Saved your steam id, no need to use --id each time now. You can replace it by using --id again.");
         Ok(Credentials {key, steam_id: id.clone()})
     }
     else {
-        let modules = module::get_modules().expect("Failed to load modules");
-        for m in modules {
-            match m {
-                STEAM(key, steam_id) => return Ok(Credentials { key, steam_id }),
-            }
-        }
-        Err(anyhow!("No steam crendentials to load, run with --id first"))
+        Err(anyhow!("No steam crendentials to load, run with --id"))
     }
 }
 

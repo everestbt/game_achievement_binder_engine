@@ -1,7 +1,6 @@
 use super::App;
 
 use crate::{
-    Credentials,
     Message, 
     OWNED_GAMES
 };
@@ -13,6 +12,7 @@ use iced::widget::{
 use iced::{Center, Left, Font, Element};
 use module::{
     Module,
+    GameIdentifier,
     achievements::{
         ModuleGoal,
         get_goals,
@@ -26,28 +26,33 @@ pub struct Goal {
     pub display_name: String,
     pub description: String,
     // DATA
-    pub app_id: i32,
+    pub id: GameIdentifier,
     pub achievement_name: String,
 }
 
 impl Goal {
-    pub async fn list(credentials: Credentials) -> Vec<Self> {
-        let steam_module = Module::STEAM(credentials.key.clone(), credentials.steam_id.clone());
-        let mut goals = get_goals(&steam_module).expect("Failed to load achievements");
-        goals.sort();
-        goals.iter().map(|g| 
-            match g {
-                ModuleGoal::STEAM(a) => {
-                    Goal {
-                        game_name: OWNED_GAMES.get(&a.game_id).unwrap().name.clone(),
-                        display_name: a.display_name.clone(),
-                        description: a.description.clone().unwrap_or("-".to_string()),
-                        app_id: a.game_id,
-                        achievement_name: a.achievement_name.clone(),
+    pub async fn list(modules: Vec<Module>) -> Vec<Self> {
+        let mut goals = Vec::new();
+        for m in modules {
+            let mut module_goals = get_goals(&m).expect("Failed to load achievements");
+            module_goals.sort();
+            let mut mapped: Vec<Goal> = module_goals.iter().map(|g| 
+                match g {
+                    ModuleGoal::STEAM(a) => {
+                        let id = GameIdentifier { module: m.clone(), id: a.game_id };
+                        Goal {
+                            game_name: OWNED_GAMES.get(&id).unwrap().name.clone(),
+                            display_name: a.display_name.clone(),
+                            description: a.description.clone().unwrap_or("-".to_string()),
+                            id,
+                            achievement_name: a.achievement_name.clone(),
+                        }
                     }
-                }
-            })
-            .collect()
+                })
+                .collect();
+            goals.append(&mut mapped);
+        }
+        goals
     }
 }
 
@@ -64,7 +69,7 @@ impl App {
                 let columns = [
                     table::column(bold("Icon"), |goal: &Goal| 
                         {
-                            if let Some(i) = self.goal_icons.get(&(goal.app_id, goal.achievement_name.clone())) {
+                            if let Some(i) = self.goal_icons.get(&(goal.id.clone(), goal.achievement_name.clone())) {
                                 column![image(i).width(60).height(60)]
                             }
                             else {

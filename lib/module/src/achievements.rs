@@ -1,4 +1,4 @@
-use crate::Module;
+use crate::{GameIdentifier, Module};
 
 use std::collections::HashSet;
 use steam_db::{
@@ -24,7 +24,7 @@ pub fn save_achievement_goal(achievement: ModuleGoal) -> Result<()> {
 
 pub fn get_goals(module: &Module) -> Result<Vec<ModuleGoal>> {
     match module {
-        Module::STEAM(_, _) => {
+        Module::STEAM(_) => {
             Ok(achievement_store::get_achievements()?
                 .iter()
                 .map(|a| ModuleGoal::STEAM(SteamAchievement { 
@@ -39,10 +39,10 @@ pub fn get_goals(module: &Module) -> Result<Vec<ModuleGoal>> {
     }
 }
 
-pub fn get_game_goals(module: &Module, game_id: &i32) -> Result<Vec<ModuleGoal>> {
-    match module {
-        Module::STEAM(_, _) => {
-            Ok(achievement_store::get_achievements_for_app(game_id)?
+pub fn get_game_goals(game_identifier: &GameIdentifier) -> Result<Vec<ModuleGoal>> {
+    match game_identifier.module {
+        Module::STEAM(_) => {
+            Ok(achievement_store::get_achievements_for_app(&game_identifier.id)?
                 .iter()
                 .map(|a| ModuleGoal::STEAM(SteamAchievement { 
                     achievement_name: a.achievement_name.clone(), 
@@ -56,10 +56,10 @@ pub fn get_game_goals(module: &Module, game_id: &i32) -> Result<Vec<ModuleGoal>>
     }
 }
 
-pub fn get_excluded_achievements(module: &Module, game_id: &i32) -> Result<HashSet<String>> {
-    match module {
-        Module::STEAM(_, _) => {
-            Ok(excluded_achievement_store::get_excluded_achievements_for_app(game_id)?
+pub fn get_excluded_achievements(game_identifier: &GameIdentifier) -> Result<HashSet<String>> {
+    match game_identifier.module {
+        Module::STEAM(_) => {
+            Ok(excluded_achievement_store::get_excluded_achievements_for_app(&game_identifier.id)?
                 .iter()
                 .map(|e| e.achievement_name.clone())
                 .collect()
@@ -68,10 +68,10 @@ pub fn get_excluded_achievements(module: &Module, game_id: &i32) -> Result<HashS
     }
 }
 
-pub fn save_excluded_achievement(module: &Module, game_id: &i32, achievement_name: &str) -> Result<()> {
-    match module {
-        Module::STEAM(_, _) => {
-            excluded_achievement_store::save_excluded_achievement(achievement_name, game_id)?
+pub fn save_excluded_achievement(game_identifier: &GameIdentifier, achievement_name: &str) -> Result<()> {
+    match game_identifier.module {
+        Module::STEAM(_) => {
+            excluded_achievement_store::save_excluded_achievement(achievement_name, &game_identifier.id)?
         }
     }
     Ok(())

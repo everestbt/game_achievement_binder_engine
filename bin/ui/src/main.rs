@@ -14,10 +14,10 @@ use games_list_view::{
     GameListResult
 };
 use goals_view::Goal;
+use module::get_modules;
 use simple_error::{SimpleResult};
 use std::collections::HashMap;
 use std::sync::LazyLock;
-use steam_utils::goals;
 use game_view::{GameDisplay, GameGoalDisplay};
 use trophy_case_view::{
     TrophyCaseFilter, 
@@ -33,24 +33,22 @@ use module::{
         TargetStatus,
     },
     achievements::save_excluded_achievement,
-};
-use anyhow::{
-    Result, 
-    anyhow,
+    GameIdentifier,
+    sync_caches,
 };
 
 // We only need to load this once, do it statically so it can be shared between all threads
-pub static OWNED_GAMES: LazyLock<HashMap<i32, Game>> = LazyLock::new(|| {
+pub static OWNED_GAMES: LazyLock<HashMap<GameIdentifier, Game>> = LazyLock::new(|| {
         let modules = module::get_modules().expect("Failed to load modules");
-        let mut owned_return : HashMap<i32, Game> = HashMap::new();
+        let mut owned_return : HashMap<GameIdentifier, Game> = HashMap::new();
         let runtime = tokio::runtime::Runtime::new().expect("Unable to create a runtime");
+        // Sync and update all data
+        let _ = runtime.block_on(module::sync_caches(modules.clone()));
         for m in modules {
             match m {
-                module::Module::STEAM(key, steam_id) => {
-                    // Sync and update all data
-                    runtime.block_on(goals::sync_caches(&key, &steam_id));
-                    let owned_games_vec = runtime.block_on(module::get_module_games(module::Module::STEAM(key, steam_id)));
-                    owned_games_vec.iter().for_each(|g| {owned_return.insert(g.id.clone(), g.clone());});
+                module::Module::STEAM(_) => {
+                    let owned_games_vec = runtime.block_on(module::get_module_games(m));
+                    owned_games_vec.iter().for_each(|g| {owned_return.insert(g.identifier.clone(), g.clone());});
                 },
             }
         }
@@ -72,26 +70,26 @@ pub fn main() -> iced::Result {
 #[derive(Debug, Clone)]
 enum Message {
     GamesView(GameListFilter),
-    GameView(i32), //app_id
+    GameView(GameIdentifier), 
     GameLoaded(GameDisplay),
-    GoalIconsLoaded(HashMap<(i32, String), Handle>), // app_id, achievement_name -> Image
+    GoalIconsLoaded(HashMap<(GameIdentifier, String), Handle>), // id, achievement_name -> Image
     GoalsView,
     GoalsLoaded(Vec<Goal>),
     AchievementCheckboxToggled(bool),
     GamesLoaded(GameListResult),
-    GenerateRandomAchievement(i32), // app_id
+    GenerateRandomAchievement(GameIdentifier),
     RandomAchievementGenerated(SimpleResult<(Game, Option<GameAchievement>)>), 
-    SetAsGameTarget(i32), // app_id
-    SetGameAsComplete(i32), // app_id
+    SetAsGameTarget(GameIdentifier),
+    SetGameAsComplete(GameIdentifier),
     RandomGame,
-    ExcludeAchievement(i32, String), // app_id, achievement_name
+    ExcludeAchievement(GameIdentifier, String), // id, achievement_name
     TrophyCaseView(TrophyCaseFilter),
-    TrophiesLoaded((TrophyCaseFilter, Vec<i32>)), // app_id's
+    TrophiesLoaded((TrophyCaseFilter, Vec<GameIdentifier>)),
     AchievementProgressLoaded(TotalAchievementProgress),
-    GameCoversLoaded(HashMap<i32, Handle>), // app_id -> Game Cover
+    GameCoversLoaded(HashMap<GameIdentifier, Handle>), // id -> Game Cover
     CachesSynced(SimpleResult<()>),
     GameListSearch(String),
-    EditGameCover(i32), // app_id
+    EditGameCover(GameIdentifier),
     GameCoverURLInput(String),
     SaveGameCover,
 }
@@ -102,14 +100,8 @@ enum View {
     None,
     Goals,
     Games(GameListFilter),
-    Game(i32), // app_id
+    Game(GameIdentifier),
     TrophyCase(TrophyCaseFilter),
-}
-
-#[derive(Debug, Clone)]
-struct Credentials {
-    key: String,
-    steam_id: String,
 }
 
 struct App {
@@ -120,19 +112,18 @@ struct App {
     games_have_achievements_filter: bool,
     game_list_search: String,
     goals: Option<Vec<Goal>>,
-    game_views: HashMap<i32, GameDisplay>,
-    goal_icons: HashMap<(i32, String), Handle>, // app_id, achievement_name -> image
-    trophies: HashMap<TrophyCaseFilter, Vec<i32>>,
+    game_views: HashMap<GameIdentifier, GameDisplay>,
+    goal_icons: HashMap<(GameIdentifier, String), Handle>, // id, achievement_name -> image
+    trophies: HashMap<TrophyCaseFilter, Vec<GameIdentifier>>,
     achievement_progress: Option<TotalAchievementProgress>,
-    game_covers: HashMap<i32, Handle>, // app_id -> image
+    game_covers: HashMap<GameIdentifier, Handle>, // id -> image
     // DATA
-    credentials: Credentials,
+    modules: Vec<Module>
 }
 
 impl App {
     fn new() -> Self {
-        let credentials = load_credentials().expect("Failed to load credentials");
-        tokio::runtime::Runtime::new().expect("Unable to create a runtime").block_on(sync_caches(credentials.clone())).expect("Failed to sync caches");
+        let modules = get_modules().expect("Failed to get modules");
         Self {
             view: View::default(),
             games: HashMap::new(),
@@ -144,7 +135,7 @@ impl App {
             game_covers: HashMap::new(),
             trophies: HashMap::new(),
             achievement_progress: None,
-            credentials,
+            modules,
         }
     }
 
@@ -152,16 +143,16 @@ impl App {
         match message {
             Message::GamesView(filter) => {
                 self.view = View::Games(filter.clone());
-                Task::perform(GameListDisplay::list(self.credentials.clone(), self.games_have_achievements_filter, filter.clone(), Some(self.game_list_search.clone())), Message::GamesLoaded)
+                Task::perform(GameListDisplay::list(self.modules.clone(), self.games_have_achievements_filter, filter.clone(), Some(self.game_list_search.clone())), Message::GamesLoaded)
             },
             Message::GamesLoaded(list_result) => {
                 self.games.insert((list_result.filter, list_result.has_achievements), list_result.list);
                 Task::none()
             },
             Message::GameView(id) => {
-                self.view = View::Game(id);
+                self.view = View::Game(id.clone());
                 let mut tasks = vec![
-                    Task::perform(game_view::load_game_display(self.credentials.clone(), id, OWNED_GAMES.get(&id).expect("Does not exist").name.clone()), Message::GameLoaded),
+                    Task::perform(game_view::load_game_display(id.clone(), OWNED_GAMES.get(&id).expect("Does not exist").name.clone()), Message::GameLoaded),
                 ];
                 if !self.game_covers.contains_key(&id) {
                     tasks.push(Task::perform(trophy_case_view::load_game_covers(vec![id]), Message::GameCoversLoaded))
@@ -170,15 +161,15 @@ impl App {
             },
             Message::GameLoaded(display) => {
                 let filtered_icons: Vec<GameGoalDisplay> = display.goals.iter()
-                    .filter(|i| !self.goal_icons.contains_key(&(display.app_id, i.achievement_name.clone()))).cloned()
+                    .filter(|i| !self.goal_icons.contains_key(&(display.id.clone(), i.achievement_name.clone()))).cloned()
                     .collect();
                 let task = if filtered_icons.is_empty() {
                     Task::none()
                 } 
                 else {
-                    Task::perform(game_view::load_all_goal_icons(display.app_id, filtered_icons), Message::GoalIconsLoaded)
+                    Task::perform(game_view::load_all_goal_icons(display.id.clone(), filtered_icons), Message::GoalIconsLoaded)
                 };
-                self.game_views.insert(display.app_id, display);
+                self.game_views.insert(display.id.clone(), display);
                 task
             },
             Message::GoalIconsLoaded(icons) => {
@@ -190,7 +181,7 @@ impl App {
             Message::GoalsView => {
                 self.view = View::Goals;
                 if self.goals.is_none() {
-                    Task::perform(Goal::list(self.credentials.clone()), Message::GoalsLoaded)
+                    Task::perform(Goal::list(self.modules.clone()), Message::GoalsLoaded)
                 }
                 else {
                     Task::none()
@@ -199,7 +190,7 @@ impl App {
             Message::GoalsLoaded(goals) => {
                 let mut tasks: Vec<Task<Message>> = Vec::new();
                 for g in &goals {
-                    tasks.push(Task::perform(game_view::load_game_display(self.credentials.clone(), g.app_id, g.game_name.clone()), Message::GameLoaded));
+                    tasks.push(Task::perform(game_view::load_game_display(g.id.clone(), g.game_name.clone()), Message::GameLoaded));
                 }
                 self.goals = Some(goals);
                 Task::batch(tasks)
@@ -208,17 +199,17 @@ impl App {
                 self.games_have_achievements_filter = is_checked;
                 match &self.view {
                     View::Games(filter) => {
-                        Task::perform(GameListDisplay::list(self.credentials.clone(), self.games_have_achievements_filter, filter.clone(), Some(self.game_list_search.clone())), Message::GamesLoaded)
+                        Task::perform(GameListDisplay::list(self.modules.clone(), self.games_have_achievements_filter, filter.clone(), Some(self.game_list_search.clone())), Message::GamesLoaded)
                     },
                     _ => Task::none()
                 }
             },
-            Message::GenerateRandomAchievement(ref app_id) => Task::perform(game_view::generate_random_achievement(self.credentials.clone(), *app_id), Message::RandomAchievementGenerated),
+            Message::GenerateRandomAchievement(ref app_id) => Task::perform(game_view::generate_random_achievement(app_id.clone()), Message::RandomAchievementGenerated),
             Message::RandomAchievementGenerated(random_achievement) => {
                 if let Ok(r) = random_achievement {
                     let tasks = vec![
-                        Task::perform(Goal::list(self.credentials.clone()), Message::GoalsLoaded), 
-                        Task::perform(game_view::load_game_display(self.credentials.clone(), r.0.id, r.0.name.clone()), Message::GameLoaded)
+                        Task::perform(Goal::list(self.modules.clone()), Message::GoalsLoaded), 
+                        Task::perform(game_view::load_game_display(r.0.identifier.clone(), r.0.name.clone()), Message::GameLoaded)
                     ];
                     self.handle_generated_random_achievement(r.0, r.1);
                     Task::batch(tasks)
@@ -227,47 +218,45 @@ impl App {
                     panic!("{}", random_achievement.unwrap_err().as_str())
                 }
             },
-            Message::SetAsGameTarget(app_id) => {
-                let steam_module = Module::STEAM(self.credentials.key.clone(), self.credentials.steam_id.clone());
-                save_game_target(&steam_module, &app_id, TargetStatus::Target).expect("Failed to save target");
-                if let Some(view) = self.game_views.get_mut(&app_id) {
+            Message::SetAsGameTarget(game_identifier) => {
+                save_game_target(&game_identifier, TargetStatus::Target).expect("Failed to save target");
+                if let Some(view) = self.game_views.get_mut(&game_identifier) {
                     view.target = true;
                 }
-                Task::perform(sync_caches(self.credentials.clone()), Message::CachesSynced)
+                Task::perform(sync_caches(self.modules.clone()), Message::CachesSynced)
             },
             Message::SetGameAsComplete(app_id) => {
-                let steam_module = Module::STEAM(self.credentials.key.clone(), self.credentials.steam_id.clone());
-                save_game_target(&steam_module, &app_id, TargetStatus::Complete).expect("Failed to save target");
+                save_game_target(&app_id, TargetStatus::Complete).expect("Failed to save target");
                 if let Some(view) = self.game_views.get_mut(&app_id) {
                     view.complete = true;
                 }
-                Task::perform(sync_caches(self.credentials.clone()), Message::CachesSynced)
+                Task::perform(sync_caches(self.modules.clone()), Message::CachesSynced)
             },
             Message::RandomGame => {
-                let random_game_id = OWNED_GAMES.values().nth(rand::random_range(..OWNED_GAMES.values().len())).unwrap().id;
-                self.view = View::Game(random_game_id).clone();
-                Task::perform(game_view::load_game_display(self.credentials.clone(), random_game_id, OWNED_GAMES.get(&random_game_id).expect("Does not exist").name.clone()), Message::GameLoaded)
+                let random_game_id = OWNED_GAMES.values().nth(rand::random_range(..OWNED_GAMES.values().len())).unwrap().identifier.clone();
+                self.view = View::Game(random_game_id.clone());
+                Task::perform(game_view::load_game_display(random_game_id.clone(), OWNED_GAMES.get(&random_game_id).expect("Does not exist").name.clone()), Message::GameLoaded)
             },
             Message::ExcludeAchievement(app_id, achievement_name) => {
-                let steam_module = Module::STEAM(self.credentials.key.clone(), self.credentials.steam_id.clone());
-                save_excluded_achievement(&steam_module, &app_id, &achievement_name).expect("Failed to exclude achievement");
+                save_excluded_achievement(&app_id, &achievement_name).expect("Failed to exclude achievement");
                 let tasks = vec![
-                    Task::perform(game_view::load_game_display(self.credentials.clone(), app_id, OWNED_GAMES.get(&app_id).expect("Does not exist").name.clone()), Message::GameLoaded),
-                    Task::perform(sync_caches(self.credentials.clone()), Message::CachesSynced)
+                    Task::perform(game_view::load_game_display(app_id.clone(), OWNED_GAMES.get(&app_id).expect("Does not exist").name.clone()), Message::GameLoaded),
+                    Task::perform(sync_caches(self.modules.clone()), Message::CachesSynced)
                 ];
                 Task::batch(tasks)
             },
             Message::TrophyCaseView(filter) => {
                 self.view = View::TrophyCase(filter.clone());
                 let tasks = vec![
-                    Task::perform(trophy_case_view::load_trophies(filter), Message::TrophiesLoaded),
+                    Task::perform(trophy_case_view::load_trophies(self.modules.clone(), filter), Message::TrophiesLoaded),
                     Task::perform(trophy_case_view::load_achievement_progress(), Message::AchievementProgressLoaded)
                 ];
                 Task::batch(tasks)
             },
             Message::TrophiesLoaded((filter, trophies)) => {
-                let filtered_covers: Vec<i32> = trophies.iter()
-                    .filter(|app_id| !self.game_covers.contains_key(app_id)).copied()
+                let filtered_covers: Vec<GameIdentifier> = trophies.iter()
+                    .filter(|app_id| !self.game_covers.contains_key(app_id))
+                    .cloned()
                     .collect();
                 self.trophies.insert(filter, trophies);
                 if filtered_covers.is_empty() {
@@ -293,7 +282,7 @@ impl App {
                 }
                 let mut tasks: Vec<Task<Message>> = vec![];
                 for k in self.games.keys() {
-                    tasks.push(Task::perform(GameListDisplay::list(self.credentials.clone(), k.1, k.0.clone(), Some(self.game_list_search.clone())), Message::GamesLoaded));
+                    tasks.push(Task::perform(GameListDisplay::list(self.modules.clone(), k.1, k.0.clone(), Some(self.game_list_search.clone())), Message::GamesLoaded));
                 }
                 self.trophies = HashMap::new();
                 Task::batch(tasks)
@@ -303,7 +292,7 @@ impl App {
                 
                 match &self.view {
                     View::Games(filter) => {
-                        Task::perform(GameListDisplay::list(self.credentials.clone(), self.games_have_achievements_filter, filter.clone(), Some(self.game_list_search.clone())), Message::GamesLoaded)
+                        Task::perform(GameListDisplay::list(self.modules.clone(), self.games_have_achievements_filter, filter.clone(), Some(self.game_list_search.clone())), Message::GamesLoaded)
                     },
                     _ => Task::none()
                 }
@@ -317,7 +306,7 @@ impl App {
             Message::GameCoverURLInput(input) => {
                 // This should only be done from a game view, where we can then get the app_id
                 match self.view {
-                    View::Game(app_id) => {
+                    View::Game(ref app_id) => {
                         if let Some(game) = self.game_views.get_mut(&app_id) {
                             game.game_cover_url = input;
                             Task::none()
@@ -332,12 +321,12 @@ impl App {
             Message::SaveGameCover => {
                 // This should only be done from a game view, where we can then get the app_id
                 match self.view {
-                    View::Game(app_id) => {
+                    View::Game(ref app_id) => {
                         if let Some(game) = self.game_views.get_mut(&app_id) {
                             println!("Setting url {}", game.game_cover_url);
-                            save_game_cover(Module::STEAM(self.credentials.key.clone(), self.credentials.steam_id.clone()), &app_id, &game.game_cover_url, ).expect("Failed to save game cover");
+                            save_game_cover(&app_id, &game.game_cover_url, ).expect("Failed to save game cover");
                             game.game_cover_edit = false;
-                            Task::perform(trophy_case_view::load_game_covers(vec![app_id]), Message::GameCoversLoaded)
+                            Task::perform(trophy_case_view::load_game_covers(vec![app_id.clone()]), Message::GameCoversLoaded)
                         }
                         else {
                             unreachable!("Should not be possible to call this when game view is not loaded")
@@ -372,24 +361,4 @@ impl App {
         ]
         .into()
     }
-}
-
-fn load_credentials() -> Result<Credentials> {
-    let modules = module::get_modules()?;
-    for m in modules {
-        match m {
-            module::Module::STEAM(key, steam_id) => {
-                return Ok(Credentials { 
-                    key: key.clone(),
-                    steam_id: steam_id.clone(),
-                })
-            },
-        }
-    }
-    Err(anyhow!("Did not find steam credentials, run cli with a steam id first"))
-}
-
-async fn sync_caches(credentials: Credentials) -> SimpleResult<()> {
-    goals::sync_caches(&credentials.key, &credentials.steam_id).await;
-    Ok(())
 }

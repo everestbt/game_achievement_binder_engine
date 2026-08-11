@@ -3,7 +3,6 @@ use super::App;
 use crate::OWNED_GAMES;
 use crate::View;
 use crate::Message;
-use crate::Credentials;
 
 use iced::widget::{
     center_x, center_y, column, text, button, table, scrollable, image, image::Handle, row, text_input
@@ -13,7 +12,7 @@ use std::collections::{HashSet, HashMap};
 use rayon::prelude::*;
 use simple_error::{SimpleError, SimpleResult};
 use module::{
-    Module, 
+    GameIdentifier,
     Game, 
     GameAchievement, 
     get_random_achievement_for_game, 
@@ -35,7 +34,7 @@ use futures::future::join_all;
 
 #[derive(Debug, Clone)]
 pub struct GameDisplay {
-    pub app_id: i32,
+    pub id: GameIdentifier,
     pub game_name: String,
     pub target: bool,
     pub complete: bool,
@@ -68,20 +67,20 @@ pub struct GameGoalDisplay {
 impl App {
     pub fn game_view(&self) -> Element<'_, Message> {
         match self.view {
-            View::Game(app_id) => {
+            View::Game(ref app_id) => {
                 if let Some(game) = self.game_views.get(&app_id) {
                     let game_target_button = {
                         if !game.target {
-                            Some(button("Target!").on_press(Message::SetAsGameTarget(app_id)))
+                            Some(button("Target!").on_press(Message::SetAsGameTarget(app_id.clone())))
                         }
                         else if !game.complete {
-                            Some(button("Set as complete!").on_press(Message::SetGameAsComplete(app_id)))
+                            Some(button("Set as complete!").on_press(Message::SetGameAsComplete(app_id.clone())))
                         }
                         else {
                             None
                         }
                     };
-                    let random_achievement = button("Random achievement!").on_press(Message::GenerateRandomAchievement(app_id));
+                    let random_achievement = button("Random achievement!").on_press(Message::GenerateRandomAchievement(app_id.clone()));
 
                     let controls: Element<'_, Message> = if let Some(target) = game_target_button {
                         column![
@@ -103,7 +102,7 @@ impl App {
                         let columns = [
                             table::column(bold("Icon"), |goal: &GameGoalDisplay| 
                                 {
-                                    if let Some(i) = self.goal_icons.get(&(app_id, goal.achievement_name.clone())) {
+                                    if let Some(i) = self.goal_icons.get(&(app_id.clone(), goal.achievement_name.clone())) {
                                         column![image(i).width(60).height(60)]
                                     }
                                     else {
@@ -126,7 +125,7 @@ impl App {
                             table::column(bold("Description"), |goal: &GameGoalDisplay| text(&goal.description))
                                 .align_x(Left)
                                 .align_y(Center),
-                            table::column(bold("Exclude"), |goal: &GameGoalDisplay| button("Exclude").on_press(Message::ExcludeAchievement(app_id, goal.achievement_name.clone())))
+                            table::column(bold("Exclude"), |goal: &GameGoalDisplay| button("Exclude").on_press(Message::ExcludeAchievement(app_id.clone(), goal.achievement_name.clone())))
                                 .align_x(Left)
                                 .align_y(Center),
                         ];
@@ -139,7 +138,7 @@ impl App {
                             .into()
                     };
 
-                    let game_cover: Element<'_, Message> = if let Some(cover) = self.game_covers.get(&game.app_id) {
+                    let game_cover: Element<'_, Message> = if let Some(cover) = self.game_covers.get(&game.id) {
                         image(cover).width(600).height(1100).into()
                     }
                     else {
@@ -153,7 +152,7 @@ impl App {
                                 .into()
                     }
                     else {
-                        button("Edit game cover").on_press(Message::EditGameCover(game.app_id)).into()
+                        button("Edit game cover").on_press(Message::EditGameCover(game.id.clone())).into()
                     };
                     
                     row! [
@@ -184,32 +183,30 @@ impl App {
                 achievement_name: ra.id.clone(), 
                 display_name: ra.display_name.clone(), 
                 description: ra.description.clone(), 
-                game_id: game.id.clone(), 
+                game_id: game.identifier.id.clone(), 
                 last_played: game.last_played.to_epoch_days() as i64 * 86400 
             });
             save_achievement_goal(steam_achievement).expect("Failed to save achievement");
-            if let Some(game_view) = self.game_views.get_mut(&game.id) && let Some(achievement) = game_view.goals.iter_mut().find(|a| a.achievement_name == ra.id) {
+            if let Some(game_view) = self.game_views.get_mut(&game.identifier) && let Some(achievement) = game_view.goals.iter_mut().find(|a| a.achievement_name == ra.id) {
                 achievement.goal_state = GoalState::Goal;
             }
         }
     }
 }
 
-pub async fn generate_random_achievement(credentials: Credentials, app_id: i32) -> SimpleResult<(Game, Option<GameAchievement>)> {
-    if let Some(game) = OWNED_GAMES.get(&app_id) {
-        Ok((game.clone(), get_random_achievement_for_game(Module::STEAM(credentials.key, credentials.steam_id), Some(game.id)).await))
+pub async fn generate_random_achievement(id: GameIdentifier) -> SimpleResult<(Game, Option<GameAchievement>)> {
+    if let Some(game) = OWNED_GAMES.get(&id) {
+        Ok((game.clone(), get_random_achievement_for_game(id).await))
     }
     else {
         Err(SimpleError::new("No game with that app_id"))
     }
 }
 
-pub async fn load_game_display(credentials: Credentials, app_id: i32, game_name: String) -> GameDisplay {
-    let steam_module = Module::STEAM(credentials.key.clone(), credentials.steam_id.clone());
-    let excluded_achievements: HashSet<String> = get_excluded_achievements(&steam_module, &app_id).expect("Failed to load excluded achievements");
-    let steam_module = Module::STEAM(credentials.key, credentials.steam_id);
+pub async fn load_game_display(id: GameIdentifier, game_name: String) -> GameDisplay {
+    let excluded_achievements: HashSet<String> = get_excluded_achievements(&id).expect("Failed to load excluded achievements");
 
-    let mut goals: Vec<GameGoalDisplay> = get_game_achievements(steam_module.clone(), Some(app_id)).await
+    let mut goals: Vec<GameGoalDisplay> = get_game_achievements(&id).await
         .par_iter()
         .map(|a| {
             let goal_state = {
@@ -219,7 +216,7 @@ pub async fn load_game_display(credentials: Credentials, app_id: i32, game_name:
                 else if excluded_achievements.contains(&a.id) {
                     GoalState::Excluded
                 }
-                else if get_game_goals(&steam_module, &app_id).expect("Failed to read goals").iter().any(|goal| {
+                else if get_game_goals(&id).expect("Failed to read goals").iter().any(|goal| {
                     match goal {
                         ModuleGoal::STEAM(steam_achievement) => *steam_achievement.achievement_name == a.id
                     }
@@ -242,10 +239,10 @@ pub async fn load_game_display(credentials: Credentials, app_id: i32, game_name:
         })
         .collect();
     goals.sort_by_key(|g| g.goal_state);
-    let target = get_game_target_status(&steam_module, &app_id).expect("Failed to load game target");
-    let game_cover_url = get_game_cover_url(steam_module, &app_id).expect("Failed to load game cover").map_or("".to_string(), |g| g);
+    let target = get_game_target_status(&id).expect("Failed to load game target");
+    let game_cover_url = get_game_cover_url(&id).expect("Failed to load game cover").map_or("".to_string(), |g| g);
     GameDisplay { 
-        app_id,
+        id: id.clone(),
         game_name,
         goals,
         target: target.is_some(),
@@ -258,11 +255,11 @@ pub async fn load_game_display(credentials: Credentials, app_id: i32, game_name:
     }
 }
 
-pub async fn load_all_goal_icons(app_id: i32, achievements: Vec<GameGoalDisplay>) -> HashMap<(i32, String), Handle> {
+pub async fn load_all_goal_icons(id: GameIdentifier, achievements: Vec<GameGoalDisplay>) -> HashMap<(GameIdentifier, String), Handle> {
     let mut loading_vec = vec![];
     for a in achievements {
         if let Some(achieved_icon) = a.icon && let Some(unachieved_icon) = a.icon_gray  {
-            loading_vec.push(load_goal_icon(app_id, a.achievement_name, achieved_icon, unachieved_icon, a.goal_state));
+            loading_vec.push(load_goal_icon(&id, a.achievement_name, achieved_icon, unachieved_icon, a.goal_state));
         }
     }
     let mut map = HashMap::new();
@@ -275,7 +272,7 @@ pub async fn load_all_goal_icons(app_id: i32, achievements: Vec<GameGoalDisplay>
     map
 }
 
-pub async fn load_goal_icon(app_id: i32, achievement_name: String, icon_url: String, icon_gray_url: String, goal_state: GoalState) -> SimpleResult<(i32, String, Handle)> {
+pub async fn load_goal_icon(id: &GameIdentifier, achievement_name: String, icon_url: String, icon_gray_url: String, goal_state: GoalState) -> SimpleResult<(GameIdentifier, String, Handle)> {
     let img_response = if goal_state == GoalState::Complete {
         reqwest::get(icon_url).await
     }
@@ -284,7 +281,7 @@ pub async fn load_goal_icon(app_id: i32, achievement_name: String, icon_url: Str
     };
     if let Ok(r) = img_response {
         if let Ok(b) = r.bytes().await {
-            Ok((app_id, achievement_name, Handle::from_bytes(b)))
+            Ok((id.clone(), achievement_name, Handle::from_bytes(b)))
         }
         else {
             Err(SimpleError::new("Failed to read bytes"))

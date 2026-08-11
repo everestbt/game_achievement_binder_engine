@@ -1,11 +1,11 @@
 use super::App;
 
 use crate::{
-    Credentials, 
     Message, 
     OWNED_GAMES
 };
 
+use module::GameIdentifier;
 use steam_utils::goals;
 use iced::font;
 use iced::widget::{
@@ -39,7 +39,7 @@ pub struct GameListDisplay {
     pub game_name: String,
     pub progress_display: String,
     //DATA
-    pub id: i32,
+    pub id: GameIdentifier,
 }
 
 #[derive(Debug, Clone)]
@@ -50,18 +50,25 @@ pub struct GameListResult {
 }
 
 impl GameListDisplay {
-    pub async fn list(credentials: Credentials, has_achievements: bool, filter: GameListFilter, title_search: Option<String>) -> GameListResult {
+    pub async fn list(modules: Vec<Module>, has_achievements: bool, filter: GameListFilter, title_search: Option<String>) -> GameListResult {
+        let mut target_set: HashSet<GameIdentifier> = HashSet::new();
         let completed_games_cache = goals::get_game_completion();
         let progress_cache = goals::get_game_progress();
-        let steam_module = Module::STEAM(credentials.key, credentials.steam_id);
-        let target_set: HashSet<i32> = get_game_targets(&steam_module).expect("Failed to load targets")
-            .iter()
-            .filter(|t| match t.status {
-                TargetStatus::Target => true,
-                _ => false
-            })
-            .map(|t| t.game_id)
-            .collect();
+        for m in modules {
+            match m {
+               Module::STEAM(_) => {
+                   get_game_targets(&m).expect("Failed to load targets")
+                       .iter()
+                       .filter(|t| match t.status {
+                           TargetStatus::Target => true,
+                           _ => false
+                       })
+                       .for_each(|t| {
+                           target_set.insert(GameIdentifier { module: t.module.clone(), id: t.game_id });
+                       });
+               }
+            }
+        }
 
         let owned_games_vec: Vec<&Game> = OWNED_GAMES.values().collect();
         let mut list: Vec<(&&Game, i8)> = owned_games_vec
@@ -77,28 +84,28 @@ impl GameListDisplay {
             .filter(|g| {
                 match filter {
                     GameListFilter::Targets => {
-                        target_set.contains(&g.id)
+                        target_set.contains(&g.identifier)
                     }
                     GameListFilter::InProgress => {
-                        !completed_games_cache.get(&g.id).map(|c| c.complete).unwrap_or(false) || target_set.contains(&g.id)
+                        !completed_games_cache.get(&g.identifier.id).map(|c| c.complete).unwrap_or(false) || target_set.contains(&g.identifier)
                     },
                     GameListFilter::Completed => {
-                        completed_games_cache.get(&g.id).map(|c| c.complete).unwrap_or(false) && !target_set.contains(&g.id)
+                        completed_games_cache.get(&g.identifier.id).map(|c| c.complete).unwrap_or(false) && !target_set.contains(&g.identifier)
                     },
                     GameListFilter::Perfected => {
-                        completed_games_cache.get(&g.id).map(|c| c.perfect).unwrap_or(false) && !target_set.contains(&g.id)
+                        completed_games_cache.get(&g.identifier.id).map(|c| c.perfect).unwrap_or(false) && !target_set.contains(&g.identifier)
                     }
                 }
             })
             .filter(|g| {
                 if has_achievements {
-                    progress_cache.contains_key(&g.id)
+                    progress_cache.contains_key(&g.identifier.id)
                 }
                 else {
                     true
                 }
             })
-            .map(|g| (g, progress_cache.get(&g.id).map(|p| p.get_progress()).unwrap_or(0))) // Game, Progress
+            .map(|g| (g, progress_cache.get(&g.identifier.id).map(|p| p.get_progress()).unwrap_or(0))) // Game, Progress
             .collect();
         list.sort_by_key(|a| Reverse(a.1));
 
@@ -111,7 +118,7 @@ impl GameListDisplay {
                     GameListDisplay{
                         game_name: g.0.name.clone(),
                         progress_display: g.1.to_string(),
-                        id: g.0.id,
+                        id: g.0.identifier.clone(),
                     }
                 })
                 .collect()
@@ -158,7 +165,7 @@ impl App {
                     })
                 };
                 let columns = [
-                    table::column(bold("Game Name"), |game: &GameListDisplay| button(game.game_name.as_str()).on_press(Message::GameView(game.id))),
+                    table::column(bold("Game Name"), |game: &GameListDisplay| button(game.game_name.as_str()).on_press(Message::GameView(game.id.clone()))),
                     table::column(bold("Progress"), |game: &GameListDisplay| text(game.progress_display.as_str())),
                 ];
 
