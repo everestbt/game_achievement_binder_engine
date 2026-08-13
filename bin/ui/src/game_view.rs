@@ -184,7 +184,7 @@ impl App {
                 display_name: ra.display_name.clone(), 
                 description: ra.description.clone(), 
                 game_id: game.identifier.id.clone(), 
-                last_played: game.last_played.to_epoch_days() as i64 * 86400 
+                last_played: game.last_played,
             });
             save_achievement_goal(steam_achievement).expect("Failed to save achievement");
             if let Some(game_view) = self.game_views.get_mut(&game.identifier) && let Some(achievement) = game_view.goals.iter_mut().find(|a| a.achievement_name == ra.id) {

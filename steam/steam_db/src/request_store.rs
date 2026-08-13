@@ -1,7 +1,12 @@
 use rusqlite::{params, Connection, Result};
-use chrono::{Local};
+use jiff::{
+    Zoned,
+    fmt::temporal::DateTimePrinter,
+};
 
 use db_lib::db_manager;
+
+const PRINTER: DateTimePrinter = DateTimePrinter::new();
 
 struct RequestCount {
     date: String,
@@ -21,7 +26,7 @@ pub fn increment() -> Result<bool> {
         })
     })?;
 
-    let today = Local::now().date_naive().format("%Y-%m-%d").to_string();
+    let today = PRINTER.date_to_string(&Zoned::now().date());
     let count = if let Some(row) = result.next() {
         if let Ok(current_count) = row {
             let today_count = if current_count.date == today {
@@ -67,7 +72,7 @@ pub fn get_count() -> Result<i32> {
     let conn: Connection = db_manager::get_connection();
     create_table(&conn)?;
 
-    let today = Local::now().date_naive().format("%Y-%m-%d").to_string();
+    let today = PRINTER.date_to_string(&Zoned::now().date());
     let mut stmt = conn.prepare("SELECT date, count FROM steam_request_count WHERE date = ?1")?;
     let mut result = stmt.query_map([today], |row| {
         Ok(RequestCount {

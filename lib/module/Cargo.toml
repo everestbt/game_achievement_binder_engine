@@ -5,7 +5,7 @@ edition = "2024"
 description = "A library for generic actions that apply to any game modules"
 
 [dependencies]
-chrono.workspace = true
+jiff.workspace = true
 steam_api.workspace = true
 steam_utils.workspace = true
 steam_db.workspace = true

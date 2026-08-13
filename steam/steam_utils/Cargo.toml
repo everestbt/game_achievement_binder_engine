@@ -8,3 +8,4 @@ description = "A library for steam goals actions"
 steam_api.workspace=true
 steam_db.workspace=true
 rand.workspace = true
+jiff.workspace = true

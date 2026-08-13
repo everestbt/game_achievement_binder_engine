@@ -1,5 +1,4 @@
 use rusqlite::{params, Connection, Result};
-
 use db_lib::db_manager;
 
 pub struct Achievement {
@@ -8,10 +7,10 @@ pub struct Achievement {
     pub display_name: String,
     pub app_id: i32,
     pub description: Option<String>,
-    pub last_played: i64, 
+    pub last_played: i64, // seconds
 }
 
-pub fn get_achievement(id: &i32) -> Result<Achievement> {
+pub fn get_achievement(id: &i32) -> Result<Option<Achievement>> {
     let conn: Connection = db_manager::get_connection();
     create_table(&conn)?;
 
@@ -26,8 +25,12 @@ pub fn get_achievement(id: &i32) -> Result<Achievement> {
             last_played: row.get(5)?,
         })
     })?;
-    let val = achieve_iter.next();
-    val.expect("Id not found")
+    if let Some(found) = achieve_iter.next() {
+        found.map(|a| Some(a))
+    }
+    else {
+        Ok(None)
+    }
 }
 
 pub fn get_achievements() -> Result<Vec<Achievement>> {
@@ -48,7 +51,7 @@ pub fn get_achievements() -> Result<Vec<Achievement>> {
 
     let mut achievement_vec : Vec<Achievement> = Vec::new();
     for d in achieve_iter {
-        achievement_vec.push(d.unwrap());
+        achievement_vec.push(d?);
     }
     Ok(achievement_vec)
 }
@@ -71,7 +74,7 @@ pub fn get_achievements_for_app(app_id: &i32) -> Result<Vec<Achievement>> {
 
     let mut achievement_vec : Vec<Achievement> = Vec::new();
     for d in achieve_iter {
-        achievement_vec.push(d.unwrap());
+        achievement_vec.push(d?);
     }
     Ok(achievement_vec)
 }

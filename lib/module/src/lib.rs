@@ -8,8 +8,11 @@ use steam_api::{
     achievement_fetch,
     game_cover_fetch,
 };
-use chrono::{DateTime, NaiveDate};
-use steam_utils::goals;
+use jiff::Timestamp;
+use steam_utils::{
+    goals,
+    last_played_converter_to_timestamp,
+};
 use simple_error::SimpleResult;
 use bytes::Bytes;
 use preferences::{PreferencesMap, Preferences};
@@ -42,7 +45,7 @@ pub struct Game {
     pub identifier: GameIdentifier,
     pub name: String,
     pub playtime_forever: Option<u32>, // This is the number of minutes played
-    pub last_played: NaiveDate,
+    pub last_played: Timestamp,
 }
 
 const STEAM_ID_KEY: &str = "steam_id";
@@ -98,7 +101,7 @@ pub async fn get_module_games(module: Module) -> Vec<Game> {
                     identifier: GameIdentifier { module: module.clone(), id: g.appid },
                     name: g.name.clone(),
                     playtime_forever: Some(g.playtime_forever as u32),
-                    last_played: DateTime::from_timestamp_secs(g.last_played).expect("Failed to provide a valid timestamp").date_naive()
+                    last_played: last_played_converter_to_timestamp(g.last_played)
                 }
             })
             .collect()

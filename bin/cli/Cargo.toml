@@ -12,7 +12,6 @@ reqwest.workspace = true
 tokio.workspace = true
 rand.workspace = true
 clap.workspace = true
-chrono.workspace = true
 module.workspace = true
 anyhow.workspace = true
 

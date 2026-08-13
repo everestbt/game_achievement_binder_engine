@@ -7,4 +7,5 @@ description = "The essential database access for steam random apps"
 [dependencies]
 db_lib.workspace = true
 rusqlite.workspace = true
-chrono.workspace = true
+jiff.workspace = true
+anyhow.workspace = true

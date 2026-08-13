@@ -148,7 +148,7 @@ async fn main() -> Result<()> {
         }
     }
     else if args.exclude_achievement.is_some() {
-        let achievement = achievement_store::get_achievement(&args.exclude_achievement.unwrap()).expect("Achievement no found");
+        let achievement = achievement_store::get_achievement(&args.exclude_achievement.unwrap()).expect("Achievment load failed").expect("Id was invalid");
         // First delete the achievement, if this is all that succeeds then it is at least off the list
         achievement_store::delete_achievement(&args.exclude_achievement.unwrap()).expect("Failed to delete achievement");
         // Add it to the list of excluded achievements

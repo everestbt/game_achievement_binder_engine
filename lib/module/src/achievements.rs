@@ -6,7 +6,11 @@ use steam_db::{
     achievement_store,
 };
 use anyhow::Result;
-use steam_utils::SteamAchievement;
+use steam_utils::{
+    SteamAchievement,
+    last_played_converter_to_timestamp,
+    last_played_converter_to_seconds,
+};
 
 #[derive(Eq, PartialEq, Ord, PartialOrd)]
 pub enum ModuleGoal {
@@ -16,7 +20,7 @@ pub enum ModuleGoal {
 pub fn save_achievement_goal(achievement: ModuleGoal) -> Result<()> {
     match achievement {
         ModuleGoal::STEAM(achievement) => {
-            achievement_store::save_achievement(&achievement.achievement_name, &achievement.display_name, &achievement.description, &achievement.game_id, &achievement.last_played)?
+            achievement_store::save_achievement(&achievement.achievement_name, &achievement.display_name, &achievement.description, &achievement.game_id, &last_played_converter_to_seconds(achievement.last_played))?
         }
     }
     Ok(())
@@ -32,7 +36,7 @@ pub fn get_goals(module: &Module) -> Result<Vec<ModuleGoal>> {
                     display_name: a.display_name.clone(), 
                     description: a.description.clone(), 
                     game_id: a.app_id, 
-                    last_played: a.last_played 
+                    last_played: last_played_converter_to_timestamp(a.last_played) 
                 }))
                 .collect())
         }
@@ -49,7 +53,7 @@ pub fn get_game_goals(game_identifier: &GameIdentifier) -> Result<Vec<ModuleGoal
                     display_name: a.display_name.clone(), 
                     description: a.description.clone(), 
                     game_id: a.app_id, 
-                    last_played: a.last_played 
+                    last_played: last_played_converter_to_timestamp(a.last_played) 
                 }))
                 .collect())
         }
