@@ -3,23 +3,22 @@ use steam_db::request_store;
 use anyhow::Result;
 use reqwest::Client;
 
-// Player Achievements Request
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Clone)]
 pub struct PlayerAchievement {
-    pub apiname: String,
-    pub achieved: i32,
+    pub name: String,
+    pub achieved: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct PlayerAchievements {
-    pub achievements: Vec<PlayerAchievement>,
-    #[serde(rename = "gameName")]
-    pub game_name: String,
+// Player Achievements Request
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct PlayerAchievementInternal {
+    apiname: String,
+    achieved: i32,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 struct PlayerAchievementsInternal {
-    achievements: Option<Vec<PlayerAchievement>>,
+    achievements: Option<Vec<PlayerAchievementInternal>>,
     #[serde(rename = "gameName")]
     game_name: Option<String>,
     success: bool,
@@ -30,7 +29,7 @@ struct PlayerStatsResponse {
     playerstats: PlayerAchievementsInternal,
 }
 
-pub async fn get_player_achievements(key : &str, steam_id : &str, app_id : &i32) -> Result<Option<PlayerAchievements>> {
+pub async fn get_player_achievements(key : &str, steam_id : &str, app_id : &i32) -> Result<Vec<PlayerAchievement>> {
     let get_player_achievements_request: String = "https://api.steampowered.com/ISteamUserStats/GetPlayerAchievements/v1/?".to_owned()
         + "&key=" + key + "&steamid=" + steam_id
         + "&appid=" + &app_id.to_string();
@@ -45,14 +44,15 @@ pub async fn get_player_achievements(key : &str, steam_id : &str, app_id : &i32)
         .json()
         .await?;
     // Success code can be true but no achievements present, typically for more modern games (Dota 2 is an example app_id 570)
-    if response.playerstats.success && let Some(a) = response.playerstats.achievements && let Some(n) = response.playerstats.game_name {
-        Ok(Some(PlayerAchievements {
-            achievements: a,
-            game_name: n,
-        }))
+    if response.playerstats.success && let Some(a) = response.playerstats.achievements {
+        Ok(a.iter().map(|i| PlayerAchievement {
+            name: i.apiname.to_owned(),
+            achieved: i.achieved == 1,
+        })
+        .collect())
     }
     else {
-        Ok(None)
+        Ok(vec![])
     }
 }
 

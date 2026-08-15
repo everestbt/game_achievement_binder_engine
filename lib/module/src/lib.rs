@@ -143,15 +143,10 @@ pub async fn get_random_achievement_for_game(game_identifier: GameIdentifier) ->
 pub async fn get_game_achievements(game_identifier: &GameIdentifier) -> Vec<GameAchievement> {
     match game_identifier.module.clone() {
         Module::STEAM(credentials) => {
-            let achieved_set: HashSet<String> = if let Some(player) = achievement_fetch::get_player_achievements(&credentials.key, &credentials.steam_id, &game_identifier.id).await.expect("Failed to load") {
-                player.achievements.iter()
-                    .filter(|a| a.achieved == 1)
-                    .map(|a| a.apiname.clone())
-                    .collect()
-            }
-            else {
-                HashSet::new()
-            };  
+            let achieved_set: HashSet<String> = achievement_fetch::get_player_achievements(&credentials.key, &credentials.steam_id, &game_identifier.id).await.expect("Failed to load").iter()
+                    .filter(|a| a.achieved)
+                    .map(|a| a.name.clone())
+                    .collect();
             achievement_fetch::get_game_achievements(&credentials.key, &game_identifier.id).await.expect("Failed to load")
                 .iter()
                 .map(|g| GameAchievement { 
