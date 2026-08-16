@@ -1,5 +1,5 @@
 use rusqlite::{params, Connection, Result};
-use db_lib::db_manager;
+use db_lib::get_connection;
 
 pub struct Achievement {
     pub id: i32,
@@ -11,7 +11,7 @@ pub struct Achievement {
 }
 
 pub fn get_achievement(id: &i32) -> Result<Option<Achievement>> {
-    let conn: Connection = db_manager::get_connection();
+    let conn: Connection = get_connection();
     create_table(&conn)?;
 
     let mut stmt = conn.prepare("SELECT id, achievement_name, display_name, description, app_id, last_played FROM steam_achievements_v_2 WHERE id = ?1")?;
@@ -34,7 +34,7 @@ pub fn get_achievement(id: &i32) -> Result<Option<Achievement>> {
 }
 
 pub fn get_achievements() -> Result<Vec<Achievement>> {
-    let conn: Connection = db_manager::get_connection();
+    let conn: Connection = get_connection();
     create_table(&conn)?;
 
     let mut stmt = conn.prepare("SELECT id, achievement_name, display_name, description, app_id, last_played FROM steam_achievements_v_2")?;
@@ -57,7 +57,7 @@ pub fn get_achievements() -> Result<Vec<Achievement>> {
 }
 
 pub fn get_achievements_for_app(app_id: &i32) -> Result<Vec<Achievement>> {
-    let conn: Connection = db_manager::get_connection();
+    let conn: Connection = get_connection();
     create_table(&conn)?;
 
     let mut stmt = conn.prepare("SELECT id, achievement_name, display_name, description, app_id, last_played FROM steam_achievements_v_2 WHERE app_id = ?1")?;
@@ -81,7 +81,7 @@ pub fn get_achievements_for_app(app_id: &i32) -> Result<Vec<Achievement>> {
 
 pub fn save_achievement(achievement_name: &String, display_name: &String, description: &Option<String>, app_id: &i32, last_played: &i64) -> Result<()> {
     // Connect to SQLite database (creates the file if it doesn't exist)
-    let conn: Connection = db_manager::get_connection();
+    let conn: Connection = get_connection();
     create_table(&conn)?;
     
     // Add in the achievement
@@ -94,7 +94,7 @@ pub fn save_achievement(achievement_name: &String, display_name: &String, descri
 }
 
 pub fn update_last_played(id: &i32, last_played: &i64) -> Result<()> {
-    let conn: Connection = db_manager::get_connection();
+    let conn: Connection = get_connection();
     create_table(&conn)?;
     
     conn.execute(
@@ -106,7 +106,7 @@ pub fn update_last_played(id: &i32, last_played: &i64) -> Result<()> {
 }
 
 pub fn delete_achievement(id: &i32) -> Result<()> {
-    let conn: Connection = db_manager::get_connection();
+    let conn: Connection = get_connection();
     
     conn.execute(
         "DELETE FROM steam_achievements_v_2 WHERE id = ?1",

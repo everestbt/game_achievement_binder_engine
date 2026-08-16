@@ -1,6 +1,6 @@
 use rusqlite::{params, Connection, Result};
 
-use db_lib::db_manager;
+use db_lib::get_connection;
 
 pub struct GameTarget {
     pub app_id: i32,
@@ -8,7 +8,7 @@ pub struct GameTarget {
 }
 
 pub fn get_game_targets() -> Result<Vec<GameTarget>> {
-    let conn: Connection = db_manager::get_connection();
+    let conn: Connection = get_connection();
     create_table(&conn)?;
 
     let mut stmt = conn.prepare("SELECT app_id, complete FROM game_targets")?;
@@ -39,7 +39,7 @@ pub fn get_game_targets() -> Result<Vec<GameTarget>> {
 }
 
 pub fn get_game_target(app_id: &i32) -> Result<Option<GameTarget>> {
-    let conn: Connection = db_manager::get_connection();
+    let conn: Connection = get_connection();
     create_table(&conn)?;
 
     let mut stmt = conn.prepare("SELECT app_id, complete FROM game_targets WHERE app_id=?1 LIMIT 1")?;
@@ -63,7 +63,7 @@ pub fn get_game_target(app_id: &i32) -> Result<Option<GameTarget>> {
 
 pub fn save_game_target(app_id: &i32, complete: &bool) -> Result<()> {
     // Connect to SQLite database (creates the file if it doesn't exist)
-    let conn: Connection = db_manager::get_connection();
+    let conn: Connection = get_connection();
     create_table(&conn)?;
     
     // Add in the achievement

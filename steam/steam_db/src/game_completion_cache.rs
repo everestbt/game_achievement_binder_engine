@@ -1,6 +1,6 @@
 use rusqlite::{params, Connection, Result};
 
-use db_lib::db_manager;
+use db_lib::get_connection;
 
 #[derive(Clone, Debug)]
 pub struct GameCompletion {
@@ -11,7 +11,7 @@ pub struct GameCompletion {
 }
 
 pub fn get_game_completion(app_id: &i32) -> Result<Option<GameCompletion>> {
-    let conn: Connection = db_manager::get_connection();
+    let conn: Connection = get_connection();
     create_table(&conn)?;
 
     let mut stmt = conn.prepare("SELECT app_id, achievements_completed, last_played, achievement_count FROM steam_game_completion WHERE app_id = ?1")?;
@@ -37,7 +37,7 @@ pub fn get_game_completion(app_id: &i32) -> Result<Option<GameCompletion>> {
 }
 
 pub fn get_all_completions() -> Result<Vec<GameCompletion>> {
-    let conn: Connection = db_manager::get_connection();
+    let conn: Connection = get_connection();
     create_table(&conn)?;
 
     let mut stmt = conn.prepare("SELECT app_id, achievements_completed, last_played, achievement_count FROM steam_game_completion")?;
@@ -71,7 +71,7 @@ pub fn get_all_completions() -> Result<Vec<GameCompletion>> {
 // Returns all perfected games, which is where the achieved count equals the total count
 // It does not return those with zero achievements as these can not be perfected
 pub fn get_perfect_games() -> Result<Vec<GameCompletion>> {
-    let conn: Connection = db_manager::get_connection();
+    let conn: Connection = get_connection();
     create_table(&conn)?;
 
     let mut stmt = conn.prepare("SELECT app_id, achievements_completed, last_played, achievement_count FROM steam_game_completion WHERE achievements_completed = achievement_count AND achievement_count != 0")?;
@@ -93,7 +93,7 @@ pub fn get_perfect_games() -> Result<Vec<GameCompletion>> {
 
 pub fn save_game_completion(app_id: &i32, achievements_completed: u32, last_played: i64, achievement_count: u32) -> Result<()> {
     // Connect to SQLite database (creates the file if it doesn't exist)
-    let conn: Connection = db_manager::get_connection();
+    let conn: Connection = get_connection();
     create_table(&conn)?;
     
     // Add in the achievement
@@ -107,7 +107,7 @@ pub fn save_game_completion(app_id: &i32, achievements_completed: u32, last_play
 
 pub fn drop_table() -> Result<()> {
     // Connect to SQLite database (creates the file if it doesn't exist)
-    let conn: Connection = db_manager::get_connection();
+    let conn: Connection = get_connection();
 
         conn.execute(
         "DROP TABLE IF EXISTS steam_game_completion",

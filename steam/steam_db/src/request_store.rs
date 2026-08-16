@@ -3,8 +3,7 @@ use jiff::{
     Zoned,
     fmt::temporal::DateTimePrinter,
 };
-
-use db_lib::db_manager;
+use db_lib::get_connection;
 
 const PRINTER: DateTimePrinter = DateTimePrinter::new();
 
@@ -15,7 +14,7 @@ struct RequestCount {
 
 pub fn increment() -> Result<bool> {
     // Connect to SQLite database (creates the file if it doesn't exist)
-    let conn: Connection = db_manager::get_connection();
+    let conn: Connection = get_connection();
     create_table(&conn)?;
     
     let mut stmt = conn.prepare("SELECT date, count FROM steam_request_count")?;
@@ -69,7 +68,7 @@ pub fn increment() -> Result<bool> {
 
 pub fn get_count() -> Result<i32> {
     // Connect to SQLite database (creates the file if it doesn't exist)
-    let conn: Connection = db_manager::get_connection();
+    let conn: Connection = get_connection();
     create_table(&conn)?;
 
     let today = PRINTER.date_to_string(&Zoned::now().date());

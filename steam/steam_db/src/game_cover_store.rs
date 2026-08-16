@@ -1,6 +1,6 @@
 use rusqlite::{params, Connection, Result};
 
-use db_lib::db_manager;
+use db_lib::get_connection;
 
 pub struct GameCover {
     pub app_id: i32,
@@ -8,7 +8,7 @@ pub struct GameCover {
 }
 
 pub fn get_game_cover(app_id: &i32) -> Result<Option<GameCover>> {
-    let conn: Connection = db_manager::get_connection();
+    let conn: Connection = get_connection();
     create_table(&conn)?;
 
     let mut stmt = conn.prepare("SELECT app_id, url FROM steam_custom_covers WHERE app_id = ?1")?;
@@ -31,7 +31,7 @@ pub fn get_game_cover(app_id: &i32) -> Result<Option<GameCover>> {
 }
 
 pub fn save_game_cover(url: &str, app_id: &i32) -> Result<()> {
-    let conn: Connection = db_manager::get_connection();
+    let conn: Connection = get_connection();
     create_table(&conn)?;
     
     // Add in the achievement
