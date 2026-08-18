@@ -1,12 +1,14 @@
 use crate::{GameIdentifier, Module};
 
 use std::collections::HashSet;
+use steam_api::achievement_fetch;
 use steam_db::{
     excluded_achievement_store,
     achievement_store,
 };
 use anyhow::Result;
 use steam_utils::{
+    goals,
     SteamAchievement,
     last_played_converter_to_timestamp,
     last_played_converter_to_seconds,
@@ -15,6 +17,40 @@ use steam_utils::{
 #[derive(Eq, PartialEq, Ord, PartialOrd)]
 pub enum ModuleGoal {
     STEAM(SteamAchievement) 
+}
+
+/// Generic interface for achievements in games
+#[derive(Debug, Clone)]
+pub struct GameAchievement {
+    pub id: String,
+    pub display_name: String,
+    pub description: Option<String>,
+    pub achieved: bool,
+    pub achieved_icon_id: Option<String>,
+    pub unachieved_icon_id: Option<String>,
+}
+
+pub async fn get_game_achievements(game_identifier: &GameIdentifier) -> Vec<GameAchievement> {
+    match game_identifier.module.clone() {
+        Module::STEAM(credentials) => {
+            let achieved_set: HashSet<String> = achievement_fetch::get_player_achievements(&credentials.key, &credentials.steam_id, &game_identifier.id).await.expect("Failed to load").iter()
+                    .filter(|a| a.achieved)
+                    .map(|a| a.name.clone())
+                    .collect();
+            achievement_fetch::get_game_achievements(&credentials.key, &game_identifier.id).await.expect("Failed to load")
+                .iter()
+                .map(|g| GameAchievement { 
+                    id: g.name.clone(), 
+                    display_name: g.display_name.clone(), 
+                    description: g.description.clone(), 
+                    achieved: achieved_set.contains(&g.name), 
+                    achieved_icon_id: Some(g.icon.clone()), 
+                    unachieved_icon_id: Some(g.icongray.clone()) 
+                })
+                .collect()
+            
+        },
+    }
 }
 
 pub fn save_achievement_goal(achievement: ModuleGoal) -> Result<()> {
@@ -79,4 +115,13 @@ pub fn save_excluded_achievement(game_identifier: &GameIdentifier, achievement_n
         }
     }
     Ok(())
+}
+
+pub async fn get_random_achievement_for_game(game_identifier: GameIdentifier) -> Option<GameAchievement> {
+    match game_identifier.module.clone() {
+        Module::STEAM(credentials) => {
+            goals::get_random_achievement_for_game(&credentials.key, &credentials.steam_id, &game_identifier.id)
+                .await.map(|g| GameAchievement { id: g.name, display_name: g.display_name, description: g.description, achieved: false, achieved_icon_id: Some(g.icon), unachieved_icon_id: Some(g.icongray) })
+        },
+    }
 }

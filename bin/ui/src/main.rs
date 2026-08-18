@@ -25,14 +25,16 @@ use trophy_case_view::{
 };
 use module::{
     Game, 
-    GameAchievement,
     game_cover::save_game_cover,
     Module,
     game_targets::{
         save_game_target,
         TargetStatus,
     },
-    achievements::save_excluded_achievement,
+    achievements::{
+        GameAchievement,
+        save_excluded_achievement,
+    },
     GameIdentifier,
     sync_caches,
 };

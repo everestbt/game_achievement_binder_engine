@@ -12,7 +12,7 @@ use rayon::prelude::*;
 use module::{
     GameIdentifier, 
     Module, 
-    load_game_cover,
+    game_cover::load_game_cover,
 };
 
 

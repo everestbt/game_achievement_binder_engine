@@ -1,23 +1,15 @@
 use bytes::Bytes;
-use simple_error::{SimpleResult, SimpleError};
 use steam_db::game_cover_store;
+use anyhow::Result;
 
-pub fn get_game_cover_blocking(app_id: &i32) -> SimpleResult<Bytes> {
+pub fn get_game_cover_blocking(app_id: &i32) -> Result<Bytes> {
     let url = if let Some(cover) = game_cover_store::get_game_cover(app_id).expect("Failed to load game cover database").map(|g| g.url) {
         cover
     }
     else {
         "https://shared.steamstatic.com/store_item_assets/steam/apps/".to_owned() + &app_id.to_string() + "/library_600x900_2x.jpg"
     };
-    let result = reqwest::blocking::get(url).and_then(|r| r.error_for_status()).and_then(|r| r.bytes());
-    match result {
-        Ok(r) => {
-            Ok(r)
-        }
-        Err(e) => {
-            Err(SimpleError::with("Failed to load game cover url", e))
-        }
-    }
+    Ok(reqwest::blocking::get(url).and_then(|r| r.error_for_status()).and_then(|r| r.bytes())?)
 }
 
 #[cfg(test)]

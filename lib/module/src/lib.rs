@@ -2,19 +2,13 @@ pub mod game_cover;
 pub mod game_targets;
 pub mod achievements;
 
-use std::collections::HashSet;
-use steam_api::{
-    game_fetch,
-    achievement_fetch,
-    game_cover_fetch,
-};
+use steam_api::game_fetch;
 use jiff::Timestamp;
 use steam_utils::{
     goals,
     last_played_converter_to_timestamp,
 };
 use simple_error::SimpleResult;
-use bytes::Bytes;
 use preferences::{PreferencesMap, Preferences};
 use local_dir::get_local_dir;
 use std::fs::File;
@@ -118,55 +112,4 @@ pub async fn sync_caches(modules: Vec<Module>) -> SimpleResult<()> {
         }
     }
     Ok(())
-}
-
-/// Generic interface for achievements in games
-#[derive(Debug, Clone)]
-pub struct GameAchievement {
-    pub id: String,
-    pub display_name: String,
-    pub description: Option<String>,
-    pub achieved: bool,
-    pub achieved_icon_id: Option<String>,
-    pub unachieved_icon_id: Option<String>,
-}
-
-pub async fn get_random_achievement_for_game(game_identifier: GameIdentifier) -> Option<GameAchievement> {
-    match game_identifier.module.clone() {
-        Module::STEAM(credentials) => {
-            goals::get_random_achievement_for_game(&credentials.key, &credentials.steam_id, &game_identifier.id)
-                .await.map(|g| GameAchievement { id: g.name, display_name: g.display_name, description: g.description, achieved: false, achieved_icon_id: Some(g.icon), unachieved_icon_id: Some(g.icongray) })
-        },
-    }
-}
-
-pub async fn get_game_achievements(game_identifier: &GameIdentifier) -> Vec<GameAchievement> {
-    match game_identifier.module.clone() {
-        Module::STEAM(credentials) => {
-            let achieved_set: HashSet<String> = achievement_fetch::get_player_achievements(&credentials.key, &credentials.steam_id, &game_identifier.id).await.expect("Failed to load").iter()
-                    .filter(|a| a.achieved)
-                    .map(|a| a.name.clone())
-                    .collect();
-            achievement_fetch::get_game_achievements(&credentials.key, &game_identifier.id).await.expect("Failed to load")
-                .iter()
-                .map(|g| GameAchievement { 
-                    id: g.name.clone(), 
-                    display_name: g.display_name.clone(), 
-                    description: g.description.clone(), 
-                    achieved: achieved_set.contains(&g.name), 
-                    achieved_icon_id: Some(g.icon.clone()), 
-                    unachieved_icon_id: Some(g.icongray.clone()) 
-                })
-                .collect()
-            
-        },
-    }
-}
-
-pub fn load_game_cover(game_identifier: &GameIdentifier) -> SimpleResult<Bytes> {
-    match game_identifier.module {
-        Module::STEAM(_) => {
-            game_cover_fetch::get_game_cover_blocking(&game_identifier.id)
-        }
-    }
 }

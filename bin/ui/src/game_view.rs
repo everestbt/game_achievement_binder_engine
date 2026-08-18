@@ -14,19 +14,19 @@ use simple_error::{SimpleError, SimpleResult};
 use module::{
     GameIdentifier,
     Game, 
-    GameAchievement, 
-    get_random_achievement_for_game, 
-    get_game_achievements,
     game_cover::get_game_cover_url,
     game_targets::{
         get_game_target_status,
         TargetStatus,
     },
     achievements::{
+        GameAchievement,
         ModuleGoal,
         get_game_goals,
         get_excluded_achievements,
         save_achievement_goal,
+        get_random_achievement_for_game, 
+        get_game_achievements,
     },
 };
 use steam_utils::SteamAchievement;
