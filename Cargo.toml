@@ -47,6 +47,7 @@ convert_case = "0.11.0"
 preferences = "2.0.0"
 anyhow = "1.0"
 futures = "0.3"
+temp-env = "0.3"
 
 # Enable more optimization in the release profile at the cost of compile time.
 [profile.release]

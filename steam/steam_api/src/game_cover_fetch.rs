@@ -15,6 +15,7 @@ pub fn get_game_cover_blocking(app_id: &i32) -> Result<Bytes> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use temp_env;
 
     #[test]
     fn test_load_game_cover() {
@@ -25,8 +26,11 @@ mod tests {
 
     #[test]
     fn test_load_game_cover_not_present() {
-        // Use an app_id which we know doesn't have a stored game cover
-        let app_id = 4035270;
-        assert!(get_game_cover_blocking(&app_id).is_err())
+        // Use test database incase a local database is present
+        temp_env::with_var("GABE_DB_PREFIX", Some("test"), || {
+            // Use an app_id which we know doesn't have a stored game cover
+            let app_id = 4035270;
+            assert!(get_game_cover_blocking(&app_id).is_err())
+        });
     }
 }
