@@ -25,8 +25,8 @@ steam_api = {path = "./steam/steam_api", version = "0.0.0"}
 steam_db = {path = "./steam/steam_db", version = "0.0.0"}
 steam_utils = {path = "./steam/steam_utils", version = "0.0.0"}
 # local crates - MTGA
-magic_the_gathering_arena_log_reader = {path = "./lib/magic_the_gathering_arena_log_reader", version = "0.0.0"}
-magic_the_gathering_arena_utils = {path = "./lib/magic_the_gathering_arena_utils", version = "0.0.0"}
+magic_the_gathering_arena_log_reader = {path = "./magic_the_gathering_arena/magic_the_gathering_arena_log_reader", version = "0.0.0"}
+magic_the_gathering_arena_utils = {path = "./magic_the_gathering_arena/magic_the_gathering_arena_utils", version = "0.0.0"}
 
 # non-local crates
 serde = { version = "1.0", features = ["derive"] }
