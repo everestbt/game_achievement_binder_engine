@@ -14,3 +14,4 @@ bytes.workspace = true
 preferences.workspace = true
 local_dir.workspace = true
 anyhow.workspace = true
+magic_the_gathering_arena_utils.workspace = true

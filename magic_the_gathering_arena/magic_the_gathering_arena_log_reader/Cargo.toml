@@ -9,3 +9,4 @@ directories.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 convert_case.workspace = true
+jiff.workspace = true

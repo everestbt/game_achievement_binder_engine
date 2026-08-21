@@ -1,11 +1,24 @@
 use directories::{BaseDirs};
-use std::env::consts::OS;
-use std::fs::File;
-use std::path::{Path, PathBuf};
-use std::io::{BufRead, BufReader};
-use std::str::FromStr;
+use std::{
+    env::consts::OS,
+    fs::{
+        self,
+        File,
+    },
+    path::{
+        Path,
+        PathBuf
+    },
+    io::{
+        BufRead,
+        BufReader,
+    },
+    str::FromStr,
+    time::SystemTime,
+};
 use serde_json::Value;
 use convert_case::ccase;
+use jiff::Timestamp;
 
 #[derive(PartialEq)]
 pub struct Achievement {
@@ -20,6 +33,30 @@ pub struct Achievement {
 pub fn get_readable_achievements() -> Vec<Achievement> {
     let path = get_path();
     read_file(path)
+}
+
+pub fn get_last_played_time() -> Option<Timestamp> {
+    let path = get_path();
+    read_file_created_time(path)
+}
+
+fn read_file_created_time(path: PathBuf) -> Option<Timestamp> {
+    if let Ok(created_time) = fs::metadata(path).and_then(|m| m.created()) {
+        if let Ok(d) = created_time.duration_since(SystemTime::UNIX_EPOCH) {
+            if let Ok(ts) = Timestamp::from_second(d.as_secs() as i64) {
+                Some(ts)
+            }
+            else {
+                None
+            }
+        }
+        else {
+            None
+        }
+    }
+    else {
+        None
+    }
 }
 
 fn read_file(path: PathBuf) -> Vec<Achievement> {
@@ -73,5 +110,11 @@ mod tests {
         let achievements = read_file(PathBuf::from_str("./example.log").unwrap());
         assert!(!achievements.is_empty());
         assert!(achievements.contains(&Achievement { name: "Going For Gold".to_string(), achieved: true }))
+    }
+
+    #[test]
+    fn test_read_created_time_of_test_file() {
+        let time = read_file_created_time(PathBuf::from_str("./example.log").unwrap());
+        assert!(time.is_some())
     }
 }
