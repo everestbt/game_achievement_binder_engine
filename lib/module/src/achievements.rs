@@ -72,7 +72,7 @@ pub fn get_goals(module: &Module) -> Result<Vec<ModuleGoal>> {
                     display_name: a.display_name.clone(), 
                     description: a.description.clone(), 
                     game_id: a.app_id, 
-                    last_played: last_played_converter_to_timestamp(a.last_played) 
+                    last_played: last_played_converter_to_timestamp(a.last_played)
                 }))
                 .collect())
         }
@@ -89,7 +89,7 @@ pub fn get_game_goals(game_identifier: &GameIdentifier) -> Result<Vec<ModuleGoal
                     display_name: a.display_name.clone(), 
                     description: a.description.clone(), 
                     game_id: a.app_id, 
-                    last_played: last_played_converter_to_timestamp(a.last_played) 
+                    last_played: last_played_converter_to_timestamp(a.last_played)
                 }))
                 .collect())
         }

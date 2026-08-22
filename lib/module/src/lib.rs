@@ -39,7 +39,7 @@ pub struct Game {
     pub identifier: GameIdentifier,
     pub name: String,
     pub playtime_forever: Option<u32>, // This is the number of minutes played
-    pub last_played: Timestamp,
+    pub last_played: Option<Timestamp>,
 }
 
 const STEAM_ID_KEY: &str = "steam_id";
@@ -95,7 +95,7 @@ pub async fn get_module_games(module: Module) -> Vec<Game> {
                     identifier: GameIdentifier { module: module.clone(), id: g.appid },
                     name: g.name.clone(),
                     playtime_forever: Some(g.playtime_forever as u32),
-                    last_played: last_played_converter_to_timestamp(g.last_played)
+                    last_played: Some(last_played_converter_to_timestamp(g.last_played))
                 }
             })
             .collect()
