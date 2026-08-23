@@ -1,0 +1,9 @@
+[package]
+name = "magic_the_gathering_arena_db"
+version = "0.0.0"
+edition = "2024"
+description = "The database access for MTGA"
+
+[dependencies]
+db_lib.workspace = true
+rusqlite.workspace = true
