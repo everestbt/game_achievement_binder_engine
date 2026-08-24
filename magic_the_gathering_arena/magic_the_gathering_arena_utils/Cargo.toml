@@ -5,3 +5,6 @@ edition = "2024"
 description = "A library for MTGA actions"
 
 [dependencies]
+anyhow.workspace = true
+magic_the_gathering_arena_log_reader.workspace = true
+magic_the_gathering_arena_db.workspace = true
