@@ -1,6 +1,10 @@
 use anyhow::Result;
-use magic_the_gathering_arena_log_reader::get_readable_achievements;
-use magic_the_gathering_arena_db::achievement_store::save_achievement;
+use magic_the_gathering_arena_log_reader::{
+    get_readable_achievements
+};
+use magic_the_gathering_arena_db::achievement_store::{
+    self, Achievement, save_achievement
+};
 
 pub const GAME_NAME : &str = "Magic the Gathering Arena";
 pub const ID : i32 = 0;
@@ -13,4 +17,8 @@ pub fn sync_achievements() -> Result<()> {
     }
     
     Ok(())
+}
+
+pub fn get_achievements() -> Result<Vec<Achievement>> {
+    Ok(achievement_store::get_achievements()?)
 }
