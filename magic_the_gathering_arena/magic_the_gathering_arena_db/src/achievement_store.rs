@@ -5,16 +5,18 @@ use std::sync::Once;
 pub struct Achievement {
     pub name: String,
     pub achieved: bool,
+    pub target: bool,
 }
 
 struct AchievementShim {
     name: String,
     achieved: u8,
+    target: Option<u8>
 }
 
 impl AchievementShim {
     fn to_pub(self) -> Achievement {
-        Achievement { name: self.name, achieved: self.achieved == 1 }
+        Achievement { name: self.name, achieved: self.achieved == 1, target: self.target.unwrap_or(0) == 1 }
     }
 }
 
@@ -22,11 +24,32 @@ pub fn get_achievements() -> Result<Vec<Achievement>> {
     let conn: Connection = get_connection();
     create_table(&conn)?;
 
-    let mut stmt = conn.prepare("SELECT name, achieved FROM mtga_achievements")?;
+    let mut stmt = conn.prepare("SELECT name, achieved, target FROM mtga_achievements")?;
     let achieve_iter = stmt.query_map([], |row| {
         Ok(AchievementShim {
             name: row.get(0)?,
             achieved: row.get(1)?,
+            target: row.get(2)?,
+        })
+    })?;
+
+    let mut achievement_vec : Vec<Achievement> = Vec::new();
+    for d in achieve_iter {
+        achievement_vec.push(d?.to_pub());
+    }
+    Ok(achievement_vec)
+}
+
+pub fn get_goals() -> Result<Vec<Achievement>> {
+    let conn: Connection = get_connection();
+    create_table(&conn)?;
+
+    let mut stmt = conn.prepare("SELECT name, achieved, target FROM mtga_achievements WHERE target = 1")?;
+    let achieve_iter = stmt.query_map([], |row| {
+        Ok(AchievementShim {
+            name: row.get(0)?,
+            achieved: row.get(1)?,
+            target: row.get(2)?,
         })
     })?;
 
@@ -63,7 +86,8 @@ fn create_table(conn: &Connection) -> Result<()> {
         if let Err(e) = conn.execute(
             "CREATE TABLE IF NOT EXISTS mtga_achievements (
                 name TEXT PRIMARY KEY,
-                achieved INTEGER NOT NULL
+                achieved INTEGER NOT NULL,
+                target INTEGER
             )",
             [], // No parameters needed
         ){
