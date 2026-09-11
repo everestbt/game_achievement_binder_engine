@@ -2666,6 +2666,7 @@ name = "magic_the_gathering_arena_utils"
 version = "0.0.0"
 dependencies = [
  "anyhow",
+ "jiff",
  "magic_the_gathering_arena_db",
  "magic_the_gathering_arena_log_reader",
 ]
