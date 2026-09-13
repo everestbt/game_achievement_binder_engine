@@ -79,6 +79,18 @@ pub fn save_achievement(name: &str, achieved: bool) -> Result<()> {
     Ok(())
 }
 
+pub fn save_goal(name: &str) -> Result<()> {
+    let conn: Connection = get_connection();
+    create_table(&conn)?;
+    
+    conn.execute(
+        "UPDATE SET target = 1 WHERE name = ?1",
+        params![name],
+    )?;
+
+    Ok(())
+}
+
 static TABLE_CREATE: Once = Once::new();
 
 fn create_table(conn: &Connection) -> Result<()> {

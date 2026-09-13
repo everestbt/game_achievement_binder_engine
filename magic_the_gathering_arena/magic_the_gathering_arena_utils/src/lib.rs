@@ -44,6 +44,11 @@ pub fn get_goals() -> Result<Vec<MTGAAchievement>> {
         .collect())
 }
 
+pub fn save_goal(name: String) -> Result<()> {
+    achievement_store::save_goal(&name)?;
+    Ok(())
+}
+
 pub fn get_last_played_time() -> Option<Timestamp> {
     magic_the_gathering_arena_log_reader::get_last_played_time()
 }
