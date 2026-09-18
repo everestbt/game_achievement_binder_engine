@@ -44,7 +44,7 @@ pub fn get_goals() -> Result<Vec<MTGAAchievement>> {
         .collect())
 }
 
-pub fn save_goal(name: String) -> Result<()> {
+pub fn save_goal(name: &str) -> Result<()> {
     achievement_store::save_goal(&name)?;
     Ok(())
 }
@@ -54,6 +54,11 @@ pub fn get_excluded_achievements() -> Result<Vec<MTGAAchievement>> {
         .iter()
         .map(|a| from_db_format(a))
         .collect())
+}
+
+pub fn save_excluded_achievement(name: &str) -> Result<()> {
+    achievement_store::save_excluded(name)?;
+    Ok(())
 }
 
 pub fn get_last_played_time() -> Option<Timestamp> {
