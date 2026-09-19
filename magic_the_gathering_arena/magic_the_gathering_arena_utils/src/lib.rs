@@ -9,6 +9,7 @@ use jiff::Timestamp;
 
 pub const GAME_NAME : &str = "Magic the Gathering Arena";
 pub const ID : i32 = 0;
+pub const GAME_COVER_URL : &str = "https://cdn2.steamgriddb.com/thumb/96f03b40f10104906b823065df07e8c6.jpg";
 
 #[derive(Eq, PartialEq, Ord, PartialOrd, Clone)]
 pub struct MTGAAchievement {
