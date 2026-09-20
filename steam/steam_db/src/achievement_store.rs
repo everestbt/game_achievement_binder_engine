@@ -26,7 +26,7 @@ pub fn get_achievement(id: &i32) -> Result<Option<Achievement>> {
         })
     })?;
     if let Some(found) = achieve_iter.next() {
-        found.map(|a| Some(a))
+        found.map(Some)
     }
     else {
         Ok(None)
