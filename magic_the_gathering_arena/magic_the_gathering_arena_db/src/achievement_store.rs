@@ -22,8 +22,8 @@ struct AchievementShim {
 }
 
 impl AchievementShim {
-    fn to_pub(self) -> Achievement {
-        Achievement { name: self.name, status: {
+    fn as_achievement(&self) -> Achievement {
+        Achievement { name: self.name.clone(), status: {
             if self.achieved == 1 {
                 Status::Achieved
             }
@@ -56,7 +56,7 @@ pub fn get_achievements() -> Result<Vec<Achievement>> {
 
     let mut achievement_vec : Vec<Achievement> = Vec::new();
     for d in achieve_iter {
-        achievement_vec.push(d?.to_pub());
+        achievement_vec.push(d?.as_achievement());
     }
     Ok(achievement_vec)
 }
@@ -94,7 +94,7 @@ fn filter_by_target(filter: TargetFilter) -> Result<Vec<Achievement>> {
 
     let mut achievement_vec : Vec<Achievement> = Vec::new();
     for d in achieve_iter {
-        achievement_vec.push(d?.to_pub());
+        achievement_vec.push(d?.as_achievement());
     }
     Ok(achievement_vec)
 }
