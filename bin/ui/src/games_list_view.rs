@@ -57,10 +57,7 @@ impl GameListDisplay {
         for m in modules {
             get_game_targets(&m).expect("Failed to load targets")
                 .iter()
-                .filter(|t| match t.status {
-                    TargetStatus::Target => true,
-                    _ => false
-                })
+                .filter(|t| matches!(t.status, TargetStatus::Target))
                 .for_each(|t| {
                     target_set.insert(GameIdentifier { module: t.module.clone(), id: t.game_id });
                 });

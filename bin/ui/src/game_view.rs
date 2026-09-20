@@ -68,7 +68,7 @@ impl App {
     pub fn game_view(&self) -> Element<'_, Message> {
         match self.view {
             View::Game(ref app_id) => {
-                if let Some(game) = self.game_views.get(&app_id) {
+                if let Some(game) = self.game_views.get(app_id) {
                     let game_target_button = {
                         if !game.target {
                             Some(button("Target!").on_press(Message::SetAsGameTarget(app_id.clone())))
@@ -183,7 +183,7 @@ impl App {
                 achievement_name: ra.id.clone(), 
                 display_name: ra.display_name.clone(), 
                 description: ra.description.clone(), 
-                game_id: game.identifier.id.clone(), 
+                game_id: game.identifier.id, 
                 last_played: game.last_played.expect("Steam achievements have last_played"),
             });
             save_achievement_goal(steam_achievement).expect("Failed to save achievement");
@@ -241,16 +241,13 @@ pub async fn load_game_display(id: GameIdentifier, game_name: String) -> GameDis
         .collect();
     goals.sort_by_key(|g| g.goal_state);
     let target = get_game_target_status(&id).expect("Failed to load game target");
-    let game_cover_url = get_game_cover_url(&id).expect("Failed to load game cover").map_or("".to_string(), |g| g);
+    let game_cover_url = get_game_cover_url(&id).expect("Failed to load game cover").unwrap_or("".to_string());
     GameDisplay { 
         id: id.clone(),
         game_name,
         goals,
         target: target.is_some(),
-        complete: target.map(|t| match t {
-                TargetStatus::Complete => true,
-                _ => false,
-            }).unwrap_or(false),
+        complete: target.map(|t| matches!(t, TargetStatus::Complete)).unwrap_or(false),
         game_cover_edit: false,
         game_cover_url,
     }
@@ -264,10 +261,8 @@ pub async fn load_all_goal_icons(id: GameIdentifier, achievements: Vec<GameGoalD
         }
     }
     let mut map = HashMap::new();
-    for loaded in join_all(loading_vec).await {
-        if let Ok(r) = loaded {
-            map.insert((r.0, r.1), r.2);
-        }
+    for r in join_all(loading_vec).await.into_iter().flatten() {
+        map.insert((r.0, r.1), r.2);
         // This drops the error, it will reload on a fresh request
     }
     map

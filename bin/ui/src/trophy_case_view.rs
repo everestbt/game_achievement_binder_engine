@@ -143,7 +143,7 @@ pub async fn load_achievement_progress() -> TotalAchievementProgress {
 pub async fn load_game_covers(ids: Vec<GameIdentifier>) -> HashMap<GameIdentifier, Handle> {
     ids.par_iter()
         .map(|g| {
-            (g.clone(), load_game_cover(&g).map(Handle::from_bytes))
+            (g.clone(), load_game_cover(g).map(Handle::from_bytes))
         })
         .filter(|t| t.1.is_ok())
         .map(|t| (t.0, t.1.expect("All none will be filtered out")))

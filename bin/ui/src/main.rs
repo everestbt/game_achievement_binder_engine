@@ -305,7 +305,7 @@ impl App {
                 // This should only be done from a game view, where we can then get the app_id
                 match self.view {
                     View::Game(ref app_id) => {
-                        if let Some(game) = self.game_views.get_mut(&app_id) {
+                        if let Some(game) = self.game_views.get_mut(app_id) {
                             game.game_cover_url = input;
                             Task::none()
                         }
@@ -320,9 +320,9 @@ impl App {
                 // This should only be done from a game view, where we can then get the app_id
                 match self.view {
                     View::Game(ref app_id) => {
-                        if let Some(game) = self.game_views.get_mut(&app_id) {
+                        if let Some(game) = self.game_views.get_mut(app_id) {
                             println!("Setting url {}", game.game_cover_url);
-                            save_game_cover(&app_id, &game.game_cover_url, ).expect("Failed to save game cover");
+                            save_game_cover(app_id, &game.game_cover_url, ).expect("Failed to save game cover");
                             game.game_cover_edit = false;
                             Task::perform(trophy_case_view::load_game_covers(vec![app_id.clone()]), Message::GameCoversLoaded)
                         }
