@@ -17,7 +17,6 @@ use local_dir::get_local_dir;
 use std::fs::File;
 use anyhow::Result;
 use std::env;
-use magic_the_gathering_arena_utils;
 
 /// A list of all available modules that are supported
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
@@ -67,7 +66,7 @@ pub fn enable_module(module: ModuleEnable) -> Result<()> {
     let mut settings: PreferencesMap<String> = PreferencesMap::new();
     match module {
         ModuleEnable::STEAM(steam_enable) => {
-            settings.insert(STEAM_ID_KEY.into(), steam_enable.steam_id.into());
+            settings.insert(STEAM_ID_KEY.into(), steam_enable.steam_id);
         }
     }
 
@@ -124,7 +123,7 @@ pub async fn sync_caches(modules: Vec<Module>) -> SimpleResult<()> {
                 goals::sync_caches(&credentials.key, &credentials.steam_id).await;
             },
             Module::MTGA => {
-                if let Err(_) = magic_the_gathering_arena_utils::sync_achievements() {
+                if magic_the_gathering_arena_utils::sync_achievements().is_err() {
                     err = Some(SimpleError::new("Failed to sync MTGA achievements"))
                 }
             }
