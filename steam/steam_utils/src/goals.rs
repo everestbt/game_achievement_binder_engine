@@ -26,16 +26,16 @@ use rand::prelude::*;
 
 pub async fn get_random_achievement_for_game(key : &str, steam_id : &str, game_id: &i32) -> Option<GameAchievement> {
     // Get the achievements for a specific game
-        let achievements = achievement_fetch::get_player_achievements(key, steam_id, &game_id).await.expect("Failed to load");
+        let achievements = achievement_fetch::get_player_achievements(key, steam_id, game_id).await.expect("Failed to load");
         if !achievements.is_empty() {
             // Get details of the achievements
-            let game_achievements: Vec<GameAchievement> = achievement_fetch::get_game_achievements(key, &game_id).await.expect("Failed to load game achievements");
+            let game_achievements: Vec<GameAchievement> = achievement_fetch::get_game_achievements(key, game_id).await.expect("Failed to load game achievements");
 
             // Load currently listed achievements
-            let current_goals_for_app: Vec<Achievement> = achievement_store::get_achievements_for_app(&game_id).expect("Failed to load current goals");
+            let current_goals_for_app: Vec<Achievement> = achievement_store::get_achievements_for_app(game_id).expect("Failed to load current goals");
 
             // Load excluded achievement
-            let excluded_achievement_for_app: Vec<ExcludedAchievement> = excluded_achievement_store::get_excluded_achievements_for_app(&game_id).expect("Failed to load excluded achievements");
+            let excluded_achievement_for_app: Vec<ExcludedAchievement> = excluded_achievement_store::get_excluded_achievements_for_app(game_id).expect("Failed to load excluded achievements");
 
             // Randomly select achievement from game
             let filter_to_unachieved: Vec<PlayerAchievement> = achievements.iter()
