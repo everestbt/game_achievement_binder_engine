@@ -6,12 +6,7 @@ static DATABASE_NAME: & str = "steam_randomiser_database.db";
 
 pub fn get_connection() -> Connection {
     // Get a database prefix if set, used for testing
-    let db_prefix = if let Ok(prefix) = env::var("GABE_DB_PREFIX") {
-        Some(prefix)
-    }
-    else {
-        None
-    };
+    let db_prefix = env::var("GABE_DB_PREFIX").ok();
     
     let path = get_local_dir(&(db_prefix.unwrap_or("".to_string()) + DATABASE_NAME));
     let conn: Connection = Connection::open(path).expect("Failed to open a connection");
