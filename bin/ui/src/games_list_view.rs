@@ -55,19 +55,15 @@ impl GameListDisplay {
         let completed_games_cache = goals::get_game_completion();
         let progress_cache = goals::get_game_progress();
         for m in modules {
-            match m {
-               Module::STEAM(_) => {
-                   get_game_targets(&m).expect("Failed to load targets")
-                       .iter()
-                       .filter(|t| match t.status {
-                           TargetStatus::Target => true,
-                           _ => false
-                       })
-                       .for_each(|t| {
-                           target_set.insert(GameIdentifier { module: t.module.clone(), id: t.game_id });
-                       });
-               }
-            }
+            get_game_targets(&m).expect("Failed to load targets")
+                .iter()
+                .filter(|t| match t.status {
+                    TargetStatus::Target => true,
+                    _ => false
+                })
+                .for_each(|t| {
+                    target_set.insert(GameIdentifier { module: t.module.clone(), id: t.game_id });
+                });
         }
 
         let owned_games_vec: Vec<&Game> = OWNED_GAMES.values().collect();

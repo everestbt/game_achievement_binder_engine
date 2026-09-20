@@ -2779,6 +2779,8 @@ dependencies = [
  "local_dir",
  "magic_the_gathering_arena_utils",
  "preferences",
+ "rand 0.10.2",
+ "reqwest",
  "simple-error",
  "steam_api",
  "steam_db",

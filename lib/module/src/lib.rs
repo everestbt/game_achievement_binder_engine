@@ -8,17 +8,22 @@ use steam_utils::{
     goals,
     last_played_converter_to_timestamp,
 };
-use simple_error::SimpleResult;
+use simple_error::{
+    SimpleResult,
+    SimpleError,
+};
 use preferences::{PreferencesMap, Preferences};
 use local_dir::get_local_dir;
 use std::fs::File;
 use anyhow::Result;
 use std::env;
+use magic_the_gathering_arena_utils;
 
 /// A list of all available modules that are supported
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum Module {
     STEAM(SteamCredentials),
+    MTGA,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
@@ -99,17 +104,36 @@ pub async fn get_module_games(module: Module) -> Vec<Game> {
                 }
             })
             .collect()
+        },
+        Module::MTGA => {
+            vec![Game{
+                name : magic_the_gathering_arena_utils::GAME_NAME.to_string(),
+                identifier : GameIdentifier { module: module.clone(), id: magic_the_gathering_arena_utils::ID },
+                playtime_forever : None,
+                last_played: magic_the_gathering_arena_utils::get_last_played_time(),
+            }]
         }
     }
 }
 
 pub async fn sync_caches(modules: Vec<Module>) -> SimpleResult<()> {
+    let mut err = None;
     for m in modules {
         match m {
             Module::STEAM(credentials) => {
                 goals::sync_caches(&credentials.key, &credentials.steam_id).await;
+            },
+            Module::MTGA => {
+                if let Err(_) = magic_the_gathering_arena_utils::sync_achievements() {
+                    err = Some(SimpleError::new("Failed to sync MTGA achievements"))
+                }
             }
         }
     }
-    Ok(())
+    if let Some(error) = err {
+        Err(error)
+    }
+    else {
+        Ok(())
+    }
 }

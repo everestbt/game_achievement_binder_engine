@@ -108,6 +108,9 @@ pub async fn load_trophies(modules: Vec<Module>, view: TrophyCaseFilter) -> (Tro
                     }) 
                     .map(|c| GameIdentifier{ module: m.clone(), id: *c.0})
                     .collect())
+            },
+            Module::MTGA => {
+                // Do nothing for now
             }
         }
     };

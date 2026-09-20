@@ -47,12 +47,8 @@ pub static OWNED_GAMES: LazyLock<HashMap<GameIdentifier, Game>> = LazyLock::new(
         // Sync and update all data
         let _ = runtime.block_on(module::sync_caches(modules.clone()));
         for m in modules {
-            match m {
-                module::Module::STEAM(_) => {
-                    let owned_games_vec = runtime.block_on(module::get_module_games(m));
-                    owned_games_vec.iter().for_each(|g| {owned_return.insert(g.identifier.clone(), g.clone());});
-                },
-            }
+            let owned_games_vec = runtime.block_on(module::get_module_games(m));
+            owned_games_vec.iter().for_each(|g| {owned_return.insert(g.identifier.clone(), g.clone());});
         }
         owned_return
     }

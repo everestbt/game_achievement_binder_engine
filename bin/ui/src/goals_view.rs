@@ -47,6 +47,16 @@ impl Goal {
                             id,
                             achievement_name: a.achievement_name.clone(),
                         }
+                    },
+                    ModuleGoal::MTGA(a) => {
+                        let id = GameIdentifier { module: m.clone(), id: 0 };
+                        Goal {
+                            game_name: OWNED_GAMES.get(&id).unwrap().name.clone(),
+                            display_name: a.name.clone(),
+                            description: "-".to_string(),
+                            id,
+                            achievement_name: a.name.clone(),
+                        }
                     }
                 })
                 .collect();

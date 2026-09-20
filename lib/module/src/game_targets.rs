@@ -16,6 +16,7 @@ pub fn get_game_target_status(game_identifier: &GameIdentifier) -> Result<Option
         Module::STEAM(_) => {
             Ok(game_target_store::get_game_target(&game_identifier.id)?.map(|t| steam_status_to_module_status(&t.complete)))
         },
+        Module::MTGA => Ok(None),
     }
 }
 
@@ -38,6 +39,7 @@ pub fn get_game_targets(module: &Module) -> Result<Vec<GameTarget>> {
                 })
                 .collect())
         },
+        Module::MTGA => Ok(vec![]),
     }
 }
 
@@ -49,6 +51,7 @@ pub fn save_game_target(game_identifier: &GameIdentifier, status: TargetStatus) 
                 TargetStatus::Complete => &true
             })?
         },
+        Module::MTGA => unimplemented!("Not implemented for MTGA"),
     }
     Ok(())
 }

@@ -218,7 +218,8 @@ pub async fn load_game_display(id: GameIdentifier, game_name: String) -> GameDis
                 }
                 else if get_game_goals(&id).expect("Failed to read goals").iter().any(|goal| {
                     match goal {
-                        ModuleGoal::STEAM(steam_achievement) => *steam_achievement.achievement_name == a.id
+                        ModuleGoal::STEAM(steam_achievement) => *steam_achievement.achievement_name == a.id,
+                        ModuleGoal::MTGA(mtga_achievement) => *mtga_achievement.name == a.id,
                     }
                 }) {
                     GoalState::Goal
