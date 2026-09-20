@@ -34,26 +34,26 @@ pub fn sync_achievements() -> Result<()> {
 pub fn get_achievements() -> Result<Vec<MTGAAchievement>> {
     Ok(achievement_store::get_achievements()?
         .iter()
-        .map(|a| from_db_format(a))
+        .map(from_db_format)
         .collect())
 }
 
 pub fn get_goals() -> Result<Vec<MTGAAchievement>> {
     Ok(achievement_store::get_goals()?
         .iter()
-        .map(|a| from_db_format(a))
+        .map(from_db_format)
         .collect())
 }
 
 pub fn save_goal(name: &str) -> Result<()> {
-    achievement_store::save_goal(&name)?;
+    achievement_store::save_goal(name)?;
     Ok(())
 }
 
 pub fn get_excluded_achievements() -> Result<Vec<MTGAAchievement>> {
     Ok(achievement_store::get_excluded()?
         .iter()
-        .map(|a| from_db_format(a))
+        .map(from_db_format)
         .collect())
 }
 
