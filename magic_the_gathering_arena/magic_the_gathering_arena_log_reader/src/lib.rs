@@ -43,12 +43,7 @@ pub fn get_last_played_time() -> Option<Timestamp> {
 fn read_file_created_time(path: PathBuf) -> Option<Timestamp> {
     if let Ok(created_time) = fs::metadata(path).and_then(|m| m.created()) {
         if let Ok(d) = created_time.duration_since(SystemTime::UNIX_EPOCH) {
-            if let Ok(ts) = Timestamp::from_second(d.as_secs() as i64) {
-                Some(ts)
-            }
-            else {
-                None
-            }
+            Timestamp::from_second(d.as_secs() as i64).ok()
         }
         else {
             None
