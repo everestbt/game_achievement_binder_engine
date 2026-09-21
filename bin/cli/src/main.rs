@@ -61,6 +61,10 @@ struct Args {
     /// Show debug level information
     #[arg(short, long)]
     debug: bool,
+
+    /// Enable module
+    #[arg(long)]
+    enable_module: Option<String>,
 }
 
 struct Credentials {
@@ -184,7 +188,12 @@ async fn main() -> Result<()> {
     else if args.purge.is_some()
         && args.purge.is_some_and(|f| f == "completed_games") {
             game_completion_cache::drop_table().expect("Failed to drop table");
+    }
+    else if let Some(module_enable) = args.enable_module {
+        if module_enable == "MTGA" {
+            enable_module(ModuleEnable::MTGA).expect("failed to enable MTGA module");
         }
+    }
 
     if args.debug {
         let request_count = request_store::get_count().expect("Failed to load request count");

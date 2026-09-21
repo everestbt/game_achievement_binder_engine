@@ -47,9 +47,11 @@ pub struct Game {
 }
 
 const STEAM_ID_KEY: &str = "steam_id";
+const MTGA_KEY: &str = "MTGA";
 
 pub enum ModuleEnable {
-    STEAM(SteamEnable)
+    STEAM(SteamEnable),
+    MTGA,
 }
 
 pub struct SteamEnable {
@@ -63,10 +65,13 @@ impl SteamEnable {
 }
 
 pub fn enable_module(module: ModuleEnable) -> Result<()> {
-    let mut settings: PreferencesMap<String> = PreferencesMap::new();
+    let mut settings = read_module_settings()?;
     match module {
         ModuleEnable::STEAM(steam_enable) => {
             settings.insert(STEAM_ID_KEY.into(), steam_enable.steam_id);
+        },
+        ModuleEnable::MTGA => {
+            settings.insert(MTGA_KEY.into(), "Enable".to_string());
         }
     }
 
@@ -78,9 +83,7 @@ pub fn enable_module(module: ModuleEnable) -> Result<()> {
 }
 
 pub fn get_modules() -> Result<Vec<Module>> {
-    let path = get_local_dir("settings");
-    let mut reader = File::open(path)?;
-    let settings = PreferencesMap::<String>::load_from(&mut reader)?;
+    let settings = read_module_settings()?;
 
     let mut modules = vec![];
     if let Some(id) = settings.get(STEAM_ID_KEY) {
@@ -88,7 +91,16 @@ pub fn get_modules() -> Result<Vec<Module>> {
         let crendentials = SteamCredentials{key, steam_id: id.clone()};
         modules.push(Module::STEAM(crendentials));
     }
+    if let Some(_) = settings.get(MTGA_KEY) {
+        modules.push(Module::MTGA);
+    }
     Ok(modules)
+}
+
+fn read_module_settings() -> Result<PreferencesMap::<String>> {
+    let path = get_local_dir("settings");
+    let mut reader = File::open(path)?;
+    Ok(PreferencesMap::<String>::load_from(&mut reader)?)
 }
 
 pub async fn get_module_games(module: Module) -> Vec<Game> {
