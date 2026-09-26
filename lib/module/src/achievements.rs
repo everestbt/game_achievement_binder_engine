@@ -4,7 +4,7 @@ use std::collections::HashSet;
 use steam_api::achievement_fetch;
 use steam_db::{
     excluded_achievement_store,
-    achievement_store,
+    goal_store,
 };
 use anyhow::Result;
 use steam_utils::{
@@ -74,7 +74,7 @@ pub async fn get_game_achievements(game_identifier: &GameIdentifier) -> Vec<Game
 pub fn save_achievement_goal(achievement: ModuleGoal) -> Result<()> {
     match achievement {
         ModuleGoal::STEAM(achievement) => {
-            achievement_store::save_achievement(&achievement.achievement_name, &achievement.display_name, &achievement.description, &achievement.game_id, &last_played_converter_to_seconds(achievement.last_played))?
+            goal_store::save_goal(&achievement.achievement_name, &achievement.display_name, &achievement.description, &achievement.game_id, &last_played_converter_to_seconds(achievement.last_played))?
         },
         ModuleGoal::MTGA(achievement) => {
             magic_the_gathering_arena_utils::save_goal(&achievement.name)?
@@ -86,7 +86,7 @@ pub fn save_achievement_goal(achievement: ModuleGoal) -> Result<()> {
 pub fn get_goals(module: &Module) -> Result<Vec<ModuleGoal>> {
     match module {
         Module::STEAM(_) => {
-            Ok(achievement_store::get_achievements()?
+            Ok(goal_store::get_goals()?
                 .iter()
                 .map(|a| ModuleGoal::STEAM(SteamAchievement { 
                     achievement_name: a.achievement_name.clone(), 
@@ -109,7 +109,7 @@ pub fn get_goals(module: &Module) -> Result<Vec<ModuleGoal>> {
 pub fn get_game_goals(game_identifier: &GameIdentifier) -> Result<Vec<ModuleGoal>> {
     match game_identifier.module {
         Module::STEAM(_) => {
-            Ok(achievement_store::get_achievements_for_app(&game_identifier.id)?
+            Ok(goal_store::get_goals_for_app(&game_identifier.id)?
                 .iter()
                 .map(|a| ModuleGoal::STEAM(SteamAchievement { 
                     achievement_name: a.achievement_name.clone(), 

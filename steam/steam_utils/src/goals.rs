@@ -9,9 +9,9 @@ use steam_api::{
         Game,
     }};
 use steam_db::{
-    achievement_store::{
+    goal_store::{
         self, 
-        Achievement
+        Goal
     }, 
     excluded_achievement_store::{
         self,
@@ -32,7 +32,7 @@ pub async fn get_random_achievement_for_game(key : &str, steam_id : &str, game_i
             let game_achievements: Vec<GameAchievement> = achievement_fetch::get_game_achievements(key, game_id).await.expect("Failed to load game achievements");
 
             // Load currently listed achievements
-            let current_goals_for_app: Vec<Achievement> = achievement_store::get_achievements_for_app(game_id).expect("Failed to load current goals");
+            let current_goals_for_app: Vec<Goal> = goal_store::get_goals_for_app(game_id).expect("Failed to load current goals");
 
             // Load excluded achievement
             let excluded_achievement_for_app: Vec<ExcludedAchievement> = excluded_achievement_store::get_excluded_achievements_for_app(game_id).expect("Failed to load excluded achievements");
@@ -63,7 +63,7 @@ pub async fn get_random_achievement_for_game(key : &str, steam_id : &str, game_i
 }
 
 async fn sync_completed_achievements(key : &str, steam_id : &str) {
-    let mut achievements: Vec<achievement_store::Achievement> = achievement_store::get_achievements().expect("Failed to load achievements");
+    let mut achievements: Vec<Goal> = goal_store::get_goals().expect("Failed to load achievements");
     achievements.sort_by(|a, b| i32::cmp(&a.app_id,&b.app_id));
     let mut app_player_achievement_map: HashMap<i32, Vec<PlayerAchievement>> = HashMap::new();
     let owned_games: HashMap<i32, Game> = game_fetch::get_owned_games(key, steam_id).await.iter().map(|n| (n.appid, n.clone())).collect();
@@ -84,11 +84,11 @@ async fn sync_completed_achievements(key : &str, steam_id : &str) {
             };
             // Remove any that are already completed
             if loaded_player.iter().find(|x| x.name == a.achievement_name).unwrap().achieved {
-                achievement_store::delete_achievement(&a.id).expect("Failed to delete achievement");
+                goal_store::delete_goal(&a.id).expect("Failed to delete achievement");
             }
             // Update last_played to avoid checking again
             else {
-                achievement_store::update_last_played(&a.id, &game.last_played).expect("Failed to update the last played")
+                goal_store::update_last_played(&a.id, &game.last_played).expect("Failed to update the last played")
             }
         }
     }

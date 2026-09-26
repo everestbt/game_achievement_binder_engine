@@ -1,7 +1,7 @@
 use rusqlite::{params, Connection, Result};
 use db_lib::get_connection;
 
-pub struct Achievement {
+pub struct Goal {
     pub id: i32,
     pub achievement_name: String,
     pub display_name: String,
@@ -10,13 +10,13 @@ pub struct Achievement {
     pub last_played: i64, // seconds
 }
 
-pub fn get_achievement(id: &i32) -> Result<Option<Achievement>> {
+pub fn get_goal(id: &i32) -> Result<Option<Goal>> {
     let conn: Connection = get_connection();
     create_table(&conn)?;
 
     let mut stmt = conn.prepare("SELECT id, achievement_name, display_name, description, app_id, last_played FROM steam_achievements_v_2 WHERE id = ?1")?;
     let mut achieve_iter = stmt.query_map([id], |row| {
-        Ok(Achievement {
+        Ok(Goal {
             id: row.get(0)?,
             achievement_name: row.get(1)?,
             display_name: row.get(2)?,
@@ -33,13 +33,13 @@ pub fn get_achievement(id: &i32) -> Result<Option<Achievement>> {
     }
 }
 
-pub fn get_achievements() -> Result<Vec<Achievement>> {
+pub fn get_goals() -> Result<Vec<Goal>> {
     let conn: Connection = get_connection();
     create_table(&conn)?;
 
     let mut stmt = conn.prepare("SELECT id, achievement_name, display_name, description, app_id, last_played FROM steam_achievements_v_2")?;
     let achieve_iter = stmt.query_map([], |row| {
-        Ok(Achievement {
+        Ok(Goal {
             id: row.get(0)?,
             achievement_name: row.get(1)?,
             display_name: row.get(2)?,
@@ -49,20 +49,20 @@ pub fn get_achievements() -> Result<Vec<Achievement>> {
         })
     })?;
 
-    let mut achievement_vec : Vec<Achievement> = Vec::new();
+    let mut achievement_vec : Vec<Goal> = Vec::new();
     for d in achieve_iter {
         achievement_vec.push(d?);
     }
     Ok(achievement_vec)
 }
 
-pub fn get_achievements_for_app(app_id: &i32) -> Result<Vec<Achievement>> {
+pub fn get_goals_for_app(app_id: &i32) -> Result<Vec<Goal>> {
     let conn: Connection = get_connection();
     create_table(&conn)?;
 
     let mut stmt = conn.prepare("SELECT id, achievement_name, display_name, description, app_id, last_played FROM steam_achievements_v_2 WHERE app_id = ?1")?;
     let achieve_iter = stmt.query_map([app_id], |row| {
-        Ok(Achievement {
+        Ok(Goal {
             id: row.get(0)?,
             achievement_name: row.get(1)?,
             display_name: row.get(2)?,
@@ -72,14 +72,14 @@ pub fn get_achievements_for_app(app_id: &i32) -> Result<Vec<Achievement>> {
         })
     })?;
 
-    let mut achievement_vec : Vec<Achievement> = Vec::new();
+    let mut achievement_vec : Vec<Goal> = Vec::new();
     for d in achieve_iter {
         achievement_vec.push(d?);
     }
     Ok(achievement_vec)
 }
 
-pub fn save_achievement(achievement_name: &String, display_name: &String, description: &Option<String>, app_id: &i32, last_played: &i64) -> Result<()> {
+pub fn save_goal(achievement_name: &String, display_name: &String, description: &Option<String>, app_id: &i32, last_played: &i64) -> Result<()> {
     // Connect to SQLite database (creates the file if it doesn't exist)
     let conn: Connection = get_connection();
     create_table(&conn)?;
@@ -105,7 +105,7 @@ pub fn update_last_played(id: &i32, last_played: &i64) -> Result<()> {
     Ok(())
 }
 
-pub fn delete_achievement(id: &i32) -> Result<()> {
+pub fn delete_goal(id: &i32) -> Result<()> {
     let conn: Connection = get_connection();
     
     conn.execute(

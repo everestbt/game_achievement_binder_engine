@@ -1,4 +1,4 @@
-pub mod achievement_store;
+pub mod goal_store;
 pub mod excluded_achievement_store;
 pub mod request_store;
 pub mod game_completion_cache;
