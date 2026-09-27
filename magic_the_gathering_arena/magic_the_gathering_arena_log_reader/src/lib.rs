@@ -64,8 +64,10 @@ fn read_file(path: PathBuf) -> Vec<Achievement> {
                 let achievement_map = node.get("NodeStates").unwrap();
                 for v in achievement_map.as_object().unwrap().iter() {
                     let name = format_achievement_name(v.0);
-                    let achieved = v.1.get("Status").and_then(Value::as_str).map(|f| f == "Completed").unwrap_or(false);
-                    achievements.push(Achievement {name, achieved});
+                    if !name.contains("---meta") {
+                        let achieved = v.1.get("Status").and_then(Value::as_str).map(|f| f == "Completed").unwrap_or(false);
+                        achievements.push(Achievement {name, achieved});
+                    }
                 }
                 break
             }
