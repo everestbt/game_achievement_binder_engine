@@ -11,7 +11,6 @@ use steam_utils::{
     goals,
     SteamAchievement,
     last_played_converter_to_timestamp,
-    last_played_converter_to_seconds,
 };
 use magic_the_gathering_arena_utils::{
     self,
@@ -29,6 +28,7 @@ pub enum ModuleGoal {
 #[derive(Debug, Clone)]
 pub struct GameAchievement {
     pub id: String,
+    pub game_identifier: GameIdentifier,
     pub display_name: String,
     pub description: Option<String>,
     pub achieved: bool,
@@ -47,6 +47,7 @@ pub async fn get_game_achievements(game_identifier: &GameIdentifier) -> Vec<Game
                 .iter()
                 .map(|g| GameAchievement { 
                     id: g.name.clone(), 
+                    game_identifier: game_identifier.clone(),
                     display_name: g.display_name.clone(), 
                     description: g.description.clone(), 
                     achieved: achieved_set.contains(&g.name), 
@@ -60,6 +61,7 @@ pub async fn get_game_achievements(game_identifier: &GameIdentifier) -> Vec<Game
                 .iter()
                 .map(|g| GameAchievement {
                     id: g.name.clone(),
+                    game_identifier: game_identifier.clone(),
                     display_name: g.name.clone(),
                     description: None,
                     achieved: g.achieved,
@@ -71,13 +73,13 @@ pub async fn get_game_achievements(game_identifier: &GameIdentifier) -> Vec<Game
     }
 }
 
-pub fn save_achievement_goal(achievement: ModuleGoal) -> Result<()> {
-    match achievement {
-        ModuleGoal::STEAM(achievement) => {
-            goal_store::save_goal(&achievement.achievement_name, &achievement.display_name, &achievement.description, &achievement.game_id, &last_played_converter_to_seconds(achievement.last_played))?
+pub fn save_achievement_goal(achievement: &GameAchievement) -> Result<()> {
+    match achievement.game_identifier.module {
+        Module::STEAM(_) => {
+            goal_store::save_goal(&achievement.id, &achievement.display_name, &achievement.description, &achievement.game_identifier.id, &0)?
         },
-        ModuleGoal::MTGA(achievement) => {
-            magic_the_gathering_arena_utils::save_goal(&achievement.name)?
+        Module::MTGA => {
+            magic_the_gathering_arena_utils::save_goal(&achievement.id)?
         },
     }
     Ok(())
@@ -163,7 +165,15 @@ pub async fn get_random_achievement_for_game(game_identifier: GameIdentifier) ->
     match game_identifier.module.clone() {
         Module::STEAM(credentials) => {
             goals::get_random_achievement_for_game(&credentials.key, &credentials.steam_id, &game_identifier.id)
-                .await.map(|g| GameAchievement { id: g.name, display_name: g.display_name, description: g.description, achieved: false, achieved_icon_id: Some(g.icon), unachieved_icon_id: Some(g.icongray) })
+                .await.map(|g| GameAchievement { 
+                    id: g.name, 
+                    game_identifier: game_identifier.clone(),
+                    display_name: g.display_name, 
+                    description: g.description, 
+                    achieved: false, 
+                    achieved_icon_id: Some(g.icon), 
+                    unachieved_icon_id: Some(g.icongray) 
+                })
         },
         Module::MTGA => {
             let mut rng = rand::rng();
@@ -173,6 +183,7 @@ pub async fn get_random_achievement_for_game(game_identifier: GameIdentifier) ->
                 .choose(&mut rng)
                 .map(|a| GameAchievement { 
                     id: a.name.clone(), 
+                    game_identifier: game_identifier.clone(),
                     display_name: a.name.clone(), 
                     description: None, 
                     achieved: a.achieved, 

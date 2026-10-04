@@ -123,7 +123,7 @@ pub fn save_goal(name: &str) -> Result<()> {
     create_table(&conn)?;
     
     conn.execute(
-        "UPDATE SET target = 1 WHERE name = ?1",
+        "UPDATE mtga_achievements SET target = 1 WHERE name = ?1",
         params![name],
     )?;
 
@@ -135,7 +135,7 @@ pub fn save_excluded(name: &str) -> Result<()> {
     create_table(&conn)?;
     
     conn.execute(
-        "UPDATE SET target = -1 WHERE name = ?1",
+        "UPDATE mtga_achievements SET target = -1 WHERE name = ?1",
         params![name],
     )?;
 

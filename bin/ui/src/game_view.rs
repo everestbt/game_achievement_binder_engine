@@ -29,7 +29,6 @@ use module::{
         get_game_achievements,
     },
 };
-use steam_utils::SteamAchievement;
 use futures::future::join_all;
 
 #[derive(Debug, Clone)]
@@ -179,14 +178,7 @@ impl App {
 
     pub fn handle_generated_random_achievement(&mut self, game: Game, random_achievement: Option<GameAchievement>) {
         if let Some(ra) = random_achievement {
-            let steam_achievement = ModuleGoal::STEAM(SteamAchievement { 
-                achievement_name: ra.id.clone(), 
-                display_name: ra.display_name.clone(), 
-                description: ra.description.clone(), 
-                game_id: game.identifier.id, 
-                last_played: game.last_played.expect("Steam achievements have last_played"),
-            });
-            save_achievement_goal(steam_achievement).expect("Failed to save achievement");
+            save_achievement_goal(&ra).expect("Failed to save achievement");
             if let Some(game_view) = self.game_views.get_mut(&game.identifier) && let Some(achievement) = game_view.goals.iter_mut().find(|a| a.achievement_name == ra.id) {
                 achievement.goal_state = GoalState::Goal;
             }
