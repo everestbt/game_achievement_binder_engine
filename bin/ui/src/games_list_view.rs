@@ -6,7 +6,6 @@ use crate::{
 };
 
 use module::GameIdentifier;
-use steam_utils::goals;
 use iced::font;
 use iced::widget::{
     center_x, center_y, column, row, table, text, scrollable, button, checkbox, text_input
@@ -52,8 +51,7 @@ pub struct GameListResult {
 impl GameListDisplay {
     pub async fn list(modules: Vec<Module>, has_achievements: bool, filter: GameListFilter, title_search: Option<String>) -> GameListResult {
         let mut target_set: HashSet<GameIdentifier> = HashSet::new();
-        let completed_games_cache = goals::get_game_completion();
-        let progress_cache = goals::get_game_progress();
+        let completion_map = module::get_modules_progress(&modules).expect("Failed to load completion status");
         for m in modules {
             get_game_targets(&m).expect("Failed to load targets")
                 .iter()
@@ -80,25 +78,25 @@ impl GameListDisplay {
                         target_set.contains(&g.identifier)
                     }
                     GameListFilter::InProgress => {
-                        !completed_games_cache.get(&g.identifier.id).map(|c| c.complete).unwrap_or(false) || target_set.contains(&g.identifier)
+                        !completion_map.get(&g.identifier).map(|c| c.complete).unwrap_or(false) || target_set.contains(&g.identifier)
                     },
                     GameListFilter::Completed => {
-                        completed_games_cache.get(&g.identifier.id).map(|c| c.complete).unwrap_or(false) && !target_set.contains(&g.identifier)
+                        completion_map.get(&g.identifier).map(|c| c.complete).unwrap_or(false) && !target_set.contains(&g.identifier)
                     },
                     GameListFilter::Perfected => {
-                        completed_games_cache.get(&g.identifier.id).map(|c| c.perfect).unwrap_or(false) && !target_set.contains(&g.identifier)
+                        completion_map.get(&g.identifier).map(|c| c.perfect).unwrap_or(false) && !target_set.contains(&g.identifier)
                     }
                 }
             })
             .filter(|g| {
                 if has_achievements {
-                    progress_cache.contains_key(&g.identifier.id)
+                    completion_map.contains_key(&g.identifier)
                 }
                 else {
                     true
                 }
             })
-            .map(|g| (g, progress_cache.get(&g.identifier.id).map(|p| p.get_progress()).unwrap_or(0))) // Game, Progress
+            .map(|g| (g, completion_map.get(&g.identifier).map(|p| p.progress.get_progress()).unwrap_or(0))) // Game, Progress
             .collect();
         list.sort_by_key(|a| Reverse(a.1));
 

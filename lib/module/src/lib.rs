@@ -17,6 +17,7 @@ use local_dir::get_local_dir;
 use std::fs::File;
 use anyhow::Result;
 use std::env;
+use std::collections::HashMap;
 
 /// A list of all available modules that are supported
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
@@ -147,4 +148,86 @@ pub async fn sync_caches(modules: Vec<Module>) -> SimpleResult<()> {
     else {
         Ok(())
     }
+}
+
+pub struct GameCompletionStatus {
+    pub complete: bool,
+    pub perfect: bool,
+    pub progress: AchievementProgress,
+}
+
+#[derive(Default)]
+pub struct AchievementProgress {
+    pub total: u32,
+    pub unlocked: u32,
+    pub excluded: u32,
+}
+
+impl AchievementProgress {
+    pub fn get_progress(&self) -> i8 {
+        (100.0 * (((self.unlocked + self.excluded) as f32) / (self.total as f32))) as i8
+    }
+}
+
+pub fn get_modules_progress(modules: &Vec<Module>) -> Result<HashMap<GameIdentifier, GameCompletionStatus>> {
+    let mut map = HashMap::new();
+    for m in modules {
+        match m {
+            Module::STEAM(_) => {
+                let completetion = goals::get_game_completion();
+                let progress = goals::get_game_progress();
+                for k in completetion.keys() {
+                    let complete_val = completetion.get(&k);
+                    let progress_val = progress.get(&k);
+                    map.insert(GameIdentifier { module: m.clone(), id: *k }, GameCompletionStatus { 
+                        complete: complete_val.map(|c| c.complete).unwrap_or(false), 
+                        perfect: complete_val.map(|c| c.perfect).unwrap_or(false), 
+                        progress: {
+                            if let Some(p) = progress_val {
+                                AchievementProgress { total: p.total, unlocked: p.unlocked, excluded: p.excluded }
+                            }
+                            else {
+                                AchievementProgress::default()
+                            }
+                        } });
+                }
+                for k in progress.keys() {
+                    if !map.contains_key(&GameIdentifier { module: m.clone(), id: *k }) {
+                        let complete_val = completetion.get(&k);
+                        let progress_val = progress.get(&k);
+                        map.insert(GameIdentifier { module: m.clone(), id: *k }, GameCompletionStatus { 
+                            complete: complete_val.map(|c| c.complete).unwrap_or(false), 
+                            perfect: complete_val.map(|c| c.perfect).unwrap_or(false), 
+                            progress: {
+                                if let Some(p) = progress_val {
+                                    AchievementProgress { total: p.total, unlocked: p.unlocked, excluded: p.excluded }
+                                }
+                                else {
+                                    AchievementProgress::default()
+                                }
+                            } });
+                    }
+                }
+            },
+            Module::MTGA => {
+                let achievements = magic_the_gathering_arena_utils::get_achievements()?;
+                let complete = achievements.iter().find(|a| !a.achieved).is_none();
+                let achieved = achievements.iter().filter(|a| a.achieved).count();
+                let excluded = magic_the_gathering_arena_utils::get_excluded_achievements()?.len();
+                map.insert(
+                    GameIdentifier { module: m.clone(), id: magic_the_gathering_arena_utils::ID }, 
+                    GameCompletionStatus { 
+                        complete: complete, 
+                        perfect: complete, 
+                        progress: AchievementProgress { 
+                            total: achievements.len() as u32, 
+                            unlocked: achieved as u32, 
+                            excluded: excluded as u32,
+                        } 
+                    }
+                    );
+            }
+        }
+    }
+    Ok(map)
 }
