@@ -247,7 +247,7 @@ impl App {
                 self.view = View::TrophyCase(filter.clone());
                 let tasks = vec![
                     Task::perform(trophy_case_view::load_trophies(self.modules.clone(), filter), Message::TrophiesLoaded),
-                    Task::perform(trophy_case_view::load_achievement_progress(), Message::AchievementProgressLoaded)
+                    Task::perform(trophy_case_view::load_achievement_progress(self.modules.clone()), Message::AchievementProgressLoaded)
                 ];
                 Task::batch(tasks)
             },

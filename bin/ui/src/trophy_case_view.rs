@@ -2,7 +2,6 @@ use super::App;
 
 use crate::{View, Message, OWNED_GAMES};
 
-use steam_utils::goals;
 use iced::Element;
 use iced::widget::{
     column, row, text, image, image::Handle, grid, scrollable, center_x, button, progress_bar
@@ -94,26 +93,16 @@ pub enum TrophyCaseFilter {
 }
 
 pub async fn load_trophies(modules: Vec<Module>, view: TrophyCaseFilter) -> (TrophyCaseFilter, Vec<GameIdentifier>) {
-    let mut vec = Vec::new();
-    for m in modules {
-        match m {
-            Module::STEAM(_) => {
-                vec.append(&mut goals::get_game_completion()
-                    .iter()
-                    .filter(|c| {
-                        match view {
-                            TrophyCaseFilter::Completed => c.1.complete,
-                            TrophyCaseFilter::Perfected => c.1.perfect,
-                        }
-                    }) 
-                    .map(|c| GameIdentifier{ module: m.clone(), id: *c.0})
-                    .collect())
-            },
-            Module::MTGA => {
-                // Do nothing for now
+    let vec = module::get_modules_progress(&modules).expect("Failed to read progress")
+        .iter()
+        .filter(|c| {
+            match view {
+                TrophyCaseFilter::Completed => c.1.complete,
+                TrophyCaseFilter::Perfected => c.1.perfect,
             }
-        }
-    };
+        }) 
+        .map(|c| c.0.clone())
+        .collect();
     (view.clone(), vec)
 }
 
@@ -124,14 +113,14 @@ pub struct TotalAchievementProgress {
     pub total_excluded: u32,
 }
 
-pub async fn load_achievement_progress() -> TotalAchievementProgress {
+pub async fn load_achievement_progress(modules: Vec<Module>) -> TotalAchievementProgress {
     let mut total_achievements = 0;
     let mut unlocked_achievements = 0;
     let mut total_excluded = 0;
-    for g in goals::get_game_progress() {
-        total_achievements += g.1.total;
-        unlocked_achievements += g.1.unlocked;
-        total_excluded += g.1.excluded;
+    for g in module::get_modules_progress(&modules).expect("Failed to load progress") {
+        total_achievements += g.1.progress.total;
+        unlocked_achievements += g.1.progress.unlocked;
+        total_excluded += g.1.progress.excluded;
     }
     TotalAchievementProgress {
         total_achievements,
