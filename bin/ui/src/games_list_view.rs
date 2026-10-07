@@ -57,7 +57,7 @@ impl GameListDisplay {
                 .iter()
                 .filter(|t| matches!(t.status, TargetStatus::Target))
                 .for_each(|t| {
-                    target_set.insert(GameIdentifier { module: t.module.clone(), id: t.game_id });
+                    target_set.insert(t.game_identifier.clone());
                 });
         }
 

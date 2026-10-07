@@ -39,11 +39,11 @@ pub struct GameAchievement {
 pub async fn get_game_achievements(game_identifier: &GameIdentifier) -> Vec<GameAchievement> {
     match game_identifier.module.clone() {
         Module::STEAM(credentials) => {
-            let achieved_set: HashSet<String> = achievement_fetch::get_player_achievements(&credentials.key, &credentials.steam_id, &game_identifier.id).await.expect("Failed to load").iter()
+            let achieved_set: HashSet<String> = achievement_fetch::get_player_achievements(&credentials.key, &credentials.steam_id, &game_identifier.id.expect("Steam must always have an id")).await.expect("Failed to load").iter()
                     .filter(|a| a.achieved)
                     .map(|a| a.name.clone())
                     .collect();
-            achievement_fetch::get_game_achievements(&credentials.key, &game_identifier.id).await.expect("Failed to load")
+            achievement_fetch::get_game_achievements(&credentials.key, &game_identifier.id.expect("Steam must always have an id")).await.expect("Failed to load")
                 .iter()
                 .map(|g| GameAchievement { 
                     id: g.name.clone(), 
@@ -76,7 +76,7 @@ pub async fn get_game_achievements(game_identifier: &GameIdentifier) -> Vec<Game
 pub fn save_achievement_goal(achievement: &GameAchievement) -> Result<()> {
     match achievement.game_identifier.module {
         Module::STEAM(_) => {
-            goal_store::save_goal(&achievement.id, &achievement.display_name, &achievement.description, &achievement.game_identifier.id, &0)?
+            goal_store::save_goal(&achievement.id, &achievement.display_name, &achievement.description, &achievement.game_identifier.id.expect("Steam must always have an id"), &0)?
         },
         Module::MTGA => {
             magic_the_gathering_arena_utils::save_goal(&achievement.id)?
@@ -111,7 +111,7 @@ pub fn get_goals(module: &Module) -> Result<Vec<ModuleGoal>> {
 pub fn get_game_goals(game_identifier: &GameIdentifier) -> Result<Vec<ModuleGoal>> {
     match game_identifier.module {
         Module::STEAM(_) => {
-            Ok(goal_store::get_goals_for_app(&game_identifier.id)?
+            Ok(goal_store::get_goals_for_app(&game_identifier.id.expect("Steam must always have an id"))?
                 .iter()
                 .map(|a| ModuleGoal::STEAM(SteamAchievement { 
                     achievement_name: a.achievement_name.clone(), 
@@ -134,7 +134,7 @@ pub fn get_game_goals(game_identifier: &GameIdentifier) -> Result<Vec<ModuleGoal
 pub fn get_excluded_achievements(game_identifier: &GameIdentifier) -> Result<HashSet<String>> {
     match game_identifier.module {
         Module::STEAM(_) => {
-            Ok(excluded_achievement_store::get_excluded_achievements_for_app(&game_identifier.id)?
+            Ok(excluded_achievement_store::get_excluded_achievements_for_app(&game_identifier.id.expect("Steam must always have an id"))?
                 .iter()
                 .map(|e| e.achievement_name.clone())
                 .collect()
@@ -152,7 +152,7 @@ pub fn get_excluded_achievements(game_identifier: &GameIdentifier) -> Result<Has
 pub fn save_excluded_achievement(game_identifier: &GameIdentifier, achievement_name: &str) -> Result<()> {
     match game_identifier.module {
         Module::STEAM(_) => {
-            excluded_achievement_store::save_excluded_achievement(achievement_name, &game_identifier.id)?
+            excluded_achievement_store::save_excluded_achievement(achievement_name, &game_identifier.id.expect("Steam must always have an id"))?
         },
         Module::MTGA => {
             magic_the_gathering_arena_utils::save_excluded_achievement(achievement_name)?
@@ -164,7 +164,7 @@ pub fn save_excluded_achievement(game_identifier: &GameIdentifier, achievement_n
 pub async fn get_random_achievement_for_game(game_identifier: GameIdentifier) -> Option<GameAchievement> {
     match game_identifier.module.clone() {
         Module::STEAM(credentials) => {
-            goals::get_random_achievement_for_game(&credentials.key, &credentials.steam_id, &game_identifier.id)
+            goals::get_random_achievement_for_game(&credentials.key, &credentials.steam_id, &game_identifier.id.expect("Steam must always have an id"))
                 .await.map(|g| GameAchievement { 
                     id: g.name, 
                     game_identifier: game_identifier.clone(),

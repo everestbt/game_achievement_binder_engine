@@ -39,7 +39,7 @@ impl Goal {
             let mut mapped: Vec<Goal> = module_goals.iter().map(|g| 
                 match g {
                     ModuleGoal::STEAM(a) => {
-                        let id = GameIdentifier { module: m.clone(), id: a.game_id };
+                        let id = GameIdentifier { module: m.clone(), id: Some(a.game_id) };
                         Goal {
                             game_name: OWNED_GAMES.get(&id).unwrap().name.clone(),
                             display_name: a.display_name.clone(),
@@ -49,7 +49,7 @@ impl Goal {
                         }
                     },
                     ModuleGoal::MTGA(a) => {
-                        let id = GameIdentifier { module: m.clone(), id: 0 };
+                        let id = GameIdentifier { module: m.clone(), id: None };
                         Goal {
                             game_name: OWNED_GAMES.get(&id).unwrap().name.clone(),
                             display_name: a.name.clone(),

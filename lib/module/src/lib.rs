@@ -35,7 +35,7 @@ pub struct SteamCredentials {
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct GameIdentifier {
     pub module: Module,
-    pub id: i32,
+    pub id: Option<i32>,
 }
 
 /// The generic interface for a game definition
@@ -109,7 +109,7 @@ pub async fn get_module_games(module: Module) -> Vec<Game> {
         Module::STEAM(ref credentials) => {
             game_fetch::get_owned_games(&credentials.key, &credentials.steam_id).await.iter().map(|g| {
                 Game {
-                    identifier: GameIdentifier { module: module.clone(), id: g.appid },
+                    identifier: GameIdentifier { module: module.clone(), id: Some(g.appid) },
                     name: g.name.clone(),
                     playtime_forever: Some(g.playtime_forever as u32),
                     last_played: Some(last_played_converter_to_timestamp(g.last_played))
@@ -120,7 +120,7 @@ pub async fn get_module_games(module: Module) -> Vec<Game> {
         Module::MTGA => {
             vec![Game{
                 name : magic_the_gathering_arena_utils::GAME_NAME.to_string(),
-                identifier : GameIdentifier { module: module.clone(), id: magic_the_gathering_arena_utils::ID },
+                identifier : GameIdentifier { module: module.clone(), id: None },
                 playtime_forever : None,
                 last_played: magic_the_gathering_arena_utils::get_last_played_time(),
             }]
@@ -179,7 +179,7 @@ pub fn get_modules_progress(modules: &Vec<Module>) -> Result<HashMap<GameIdentif
                 for k in completetion.keys() {
                     let complete_val = completetion.get(&k);
                     let progress_val = progress.get(&k);
-                    map.insert(GameIdentifier { module: m.clone(), id: *k }, GameCompletionStatus { 
+                    map.insert(GameIdentifier { module: m.clone(), id: Some(*k) }, GameCompletionStatus { 
                         complete: complete_val.map(|c| c.complete).unwrap_or(false), 
                         perfect: complete_val.map(|c| c.perfect).unwrap_or(false), 
                         progress: {
@@ -192,10 +192,10 @@ pub fn get_modules_progress(modules: &Vec<Module>) -> Result<HashMap<GameIdentif
                         } });
                 }
                 for k in progress.keys() {
-                    if !map.contains_key(&GameIdentifier { module: m.clone(), id: *k }) {
+                    if !map.contains_key(&GameIdentifier { module: m.clone(), id: Some(*k) }) {
                         let complete_val = completetion.get(&k);
                         let progress_val = progress.get(&k);
-                        map.insert(GameIdentifier { module: m.clone(), id: *k }, GameCompletionStatus { 
+                        map.insert(GameIdentifier { module: m.clone(), id: Some(*k) }, GameCompletionStatus { 
                             complete: complete_val.map(|c| c.complete).unwrap_or(false), 
                             perfect: complete_val.map(|c| c.perfect).unwrap_or(false), 
                             progress: {
@@ -215,7 +215,7 @@ pub fn get_modules_progress(modules: &Vec<Module>) -> Result<HashMap<GameIdentif
                 let achieved = achievements.iter().filter(|a| a.achieved).count();
                 let excluded = magic_the_gathering_arena_utils::get_excluded_achievements()?.len();
                 map.insert(
-                    GameIdentifier { module: m.clone(), id: magic_the_gathering_arena_utils::ID }, 
+                    GameIdentifier { module: m.clone(), id: None }, 
                     GameCompletionStatus { 
                         complete: complete, 
                         perfect: complete, 

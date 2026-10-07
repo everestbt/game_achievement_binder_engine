@@ -1,6 +1,5 @@
 use crate::{
-    GameIdentifier, 
-    Module
+    GameIdentifier, Module
 };
 
 use anyhow::Result;
@@ -14,15 +13,14 @@ pub enum TargetStatus {
 pub fn get_game_target_status(game_identifier: &GameIdentifier) -> Result<Option<TargetStatus>> {
     match game_identifier.module {
         Module::STEAM(_) => {
-            Ok(game_target_store::get_game_target(&game_identifier.id)?.map(|t| steam_status_to_module_status(&t.complete)))
+            Ok(game_target_store::get_game_target(&game_identifier.id.expect("Steam must always have an ID"))?.map(|t| steam_status_to_module_status(&t.complete)))
         },
         Module::MTGA => Ok(None),
     }
 }
 
 pub struct GameTarget {
-    pub module: Module,
-    pub game_id: i32,
+    pub game_identifier: GameIdentifier,
     pub status: TargetStatus,
 }
 
@@ -32,8 +30,7 @@ pub fn get_game_targets(module: &Module) -> Result<Vec<GameTarget>> {
             Ok(game_target_store::get_game_targets()?
                 .iter().map(|t| {
                     GameTarget {
-                        module: module.clone(),
-                        game_id: t.app_id,
+                        game_identifier: GameIdentifier { module: module.clone(), id: Some(t.app_id) },
                         status: steam_status_to_module_status(&t.complete),
                     }
                 })
@@ -46,7 +43,7 @@ pub fn get_game_targets(module: &Module) -> Result<Vec<GameTarget>> {
 pub fn save_game_target(game_identifier: &GameIdentifier, status: TargetStatus) -> Result<()> {
     match game_identifier.module {
         Module::STEAM(_) => {
-            game_target_store::save_game_target(&game_identifier.id, match status {
+            game_target_store::save_game_target(&game_identifier.id.expect("Steam must always have an id"), match status {
                 TargetStatus::Target => &false,
                 TargetStatus::Complete => &true
             })?
