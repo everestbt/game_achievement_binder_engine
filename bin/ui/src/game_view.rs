@@ -101,11 +101,16 @@ impl App {
                         let columns = [
                             table::column(bold("Icon"), |goal: &GameGoalDisplay| 
                                 {
-                                    if let Some(i) = self.goal_icons.get(&(app_id.clone(), goal.achievement_name.clone())) {
-                                        column![image(i).width(60).height(60)]
+                                    if goal.icon.is_some() {
+                                        if let Some(i) = self.goal_icons.get(&(app_id.clone(), goal.achievement_name.clone())) {
+                                            column![image(i).width(60).height(60)]
+                                        }
+                                        else {
+                                            column![text("loading")]
+                                        }
                                     }
                                     else {
-                                        column![text("loading")]
+                                        column![]
                                     }
                                 }
                                 )
