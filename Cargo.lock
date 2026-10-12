@@ -2680,8 +2680,10 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "jiff",
+ "local_dir",
  "magic_the_gathering_arena_db",
  "magic_the_gathering_arena_log_reader",
+ "preferences",
 ]
 
 [[package]]

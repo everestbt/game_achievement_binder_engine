@@ -6,6 +6,12 @@ use magic_the_gathering_arena_db::achievement_store::{
     self, Achievement, save_achievement, Status
 };
 use jiff::Timestamp;
+use local_dir::get_local_dir;
+use preferences::{
+    PreferencesMap, 
+    Preferences,
+};
+use std::fs::File;
 
 pub const GAME_NAME : &str = "Magic the Gathering Arena";
 pub const GAME_COVER_URL : &str = "https://cdn2.steamgriddb.com/thumb/96f03b40f10104906b823065df07e8c6.jpg";
@@ -63,4 +69,31 @@ pub fn save_excluded_achievement(name: &str) -> Result<()> {
 
 pub fn get_last_played_time() -> Option<Timestamp> {
     magic_the_gathering_arena_log_reader::get_last_played_time()
+}
+
+const SETTINGS_FILE: &str = "mtga_settings";
+const URL_KEY: &str = "game_cover_url";
+
+pub fn set_game_cover_url(url: &str) -> Result<()> {
+    let mut settings = read_local_settings()?;
+
+    settings.insert(URL_KEY.into(), url.to_string());
+
+    let path = get_local_dir(SETTINGS_FILE);
+    let mut writer = File::create(path)?;
+    
+    settings.save_to(&mut writer)?;
+    
+    Ok(())
+}
+
+pub fn get_game_cover_url() -> Result<Option<String>> {
+    let settings = read_local_settings()?;
+    Ok(settings.get(URL_KEY).cloned())
+}
+
+fn read_local_settings() -> Result<PreferencesMap::<String>> {
+    let path = get_local_dir(SETTINGS_FILE);
+    let mut reader = File::open(path)?;
+    Ok(PreferencesMap::<String>::load_from(&mut reader)?)
 }

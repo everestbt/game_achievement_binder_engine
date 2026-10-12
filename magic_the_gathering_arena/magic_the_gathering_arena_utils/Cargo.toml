@@ -9,3 +9,5 @@ anyhow.workspace = true
 magic_the_gathering_arena_log_reader.workspace = true
 magic_the_gathering_arena_db.workspace = true
 jiff.workspace = true
+preferences.workspace = true
+local_dir.workspace = true
