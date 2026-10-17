@@ -130,11 +130,16 @@ pub async fn load_achievement_progress(modules: Vec<Module>) -> TotalAchievement
 }
 
 pub async fn load_game_covers(ids: Vec<GameIdentifier>) -> HashMap<GameIdentifier, Handle> {
-    ids.par_iter()
+    let loading: Vec<(_,_)> = ids.par_iter()
         .map(|g| {
-            (g.clone(), load_game_cover(g).map(Handle::from_bytes))
+            (g.clone(), load_game_cover(g))
         })
-        .filter(|t| t.1.is_ok())
-        .map(|t| (t.0, t.1.expect("All none will be filtered out")))
-        .collect::<HashMap<_, _>>()
+        .collect();
+    let mut map = HashMap::with_capacity(ids.len());
+    for l in loading {
+        if let Ok(loaded) = l.1.await {
+            map.insert(l.0, Handle::from_bytes(loaded));
+        }
+    }
+    map
 }

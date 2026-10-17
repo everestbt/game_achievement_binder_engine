@@ -4655,6 +4655,7 @@ dependencies = [
  "simple-error",
  "steam_db",
  "temp-env",
+ "tokio",
 ]
 
 [[package]]

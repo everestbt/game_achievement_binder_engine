@@ -16,3 +16,4 @@ anyhow.workspace = true
 
 [dev-dependencies]
 temp-env.workspace = true
+tokio.workspace = true
