@@ -2684,6 +2684,7 @@ dependencies = [
  "magic_the_gathering_arena_db",
  "magic_the_gathering_arena_log_reader",
  "preferences",
+ "temp-env",
 ]
 
 [[package]]
