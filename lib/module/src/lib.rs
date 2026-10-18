@@ -47,6 +47,8 @@ pub struct Game {
     pub last_played: Option<Timestamp>,
 }
 
+const SETTINGS_FILE_NAME: &str = "settings";
+
 const STEAM_ID_KEY: &str = "steam_id";
 const MTGA_KEY: &str = "MTGA";
 
@@ -76,7 +78,7 @@ pub fn enable_module(module: ModuleEnable) -> Result<()> {
         }
     }
 
-    let path = get_local_dir("settings");
+    let path = get_local_dir(SETTINGS_FILE_NAME);
     let mut writer = File::create(path)?;
     
     settings.save_to(&mut writer)?;
@@ -99,7 +101,7 @@ pub fn get_modules() -> Result<Vec<Module>> {
 }
 
 fn read_module_settings() -> Result<PreferencesMap::<String>> {
-    let path = get_local_dir("settings");
+    let path = get_local_dir(SETTINGS_FILE_NAME);
     let mut reader = File::open(path)?;
     Ok(PreferencesMap::<String>::load_from(&mut reader)?)
 }
