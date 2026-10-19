@@ -1,5 +1,5 @@
 use rusqlite::{params, Connection, Result};
-
+use std::sync::Once;
 use db_lib::get_connection;
 
 pub struct GameCover {
@@ -43,14 +43,20 @@ pub fn save_game_cover(url: &str, app_id: &i32) -> Result<()> {
     Ok(())
 }
 
-fn create_table(conn: &Connection) -> Result<()> {
-    conn.execute(
-        "CREATE TABLE IF NOT EXISTS steam_custom_covers (
-            app_id INTEGER PRIMARY KEY,
-            url TEXT NOT NULL
-        )",
-        [], // No parameters needed
-    )?;
+static TABLE_CREATE: Once = Once::new();
 
+fn create_table(conn: &Connection) -> Result<()> {
+    TABLE_CREATE.call_once(|| {
+        if let Err(e) = conn.execute(
+            "CREATE TABLE IF NOT EXISTS steam_custom_covers (
+                app_id INTEGER PRIMARY KEY,
+                url TEXT NOT NULL
+            )",
+            [], // No parameters needed
+        ){
+            panic!("Table failed to create {}", e);
+        }
+    });
+    
     Ok(())
 }

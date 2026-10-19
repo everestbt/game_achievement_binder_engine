@@ -1,5 +1,5 @@
 use rusqlite::{params, Connection, Result};
-
+use std::sync::Once;
 use db_lib::get_connection;
 
 pub struct ExcludedAchievement {
@@ -73,15 +73,21 @@ pub fn delete_excluded_achievement(id: &i32) -> Result<()> {
     Ok(())
 }
 
+static TABLE_CREATE: Once = Once::new();
+
 fn create_table(conn: &Connection) -> Result<()> {
-    conn.execute(
-        "CREATE TABLE IF NOT EXISTS excluded_steam_achievements (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            achievement_name TEXT NOT NULL,
-            app_id INTEGER NOT NULL
-        )",
-        [], // No parameters needed
-    )?;
+    TABLE_CREATE.call_once(|| {
+        if let Err(e) = conn.execute(
+            "CREATE TABLE IF NOT EXISTS excluded_steam_achievements (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                achievement_name TEXT NOT NULL,
+                app_id INTEGER NOT NULL
+            )",
+            [], // No parameters needed
+        ){
+            panic!("Table failed to create {}", e);
+        }
+    });
 
     Ok(())
 }

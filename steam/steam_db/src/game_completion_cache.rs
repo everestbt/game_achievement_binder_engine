@@ -1,5 +1,5 @@
 use rusqlite::{params, Connection, Result};
-
+use std::sync::Once;
 use db_lib::get_connection;
 
 #[derive(Clone, Debug)]
@@ -117,16 +117,22 @@ pub fn drop_table() -> Result<()> {
     Ok(())
 }
 
+static TABLE_CREATE: Once = Once::new();
+
 fn create_table(conn: &Connection) -> Result<()> {
-    conn.execute(
-        "CREATE TABLE IF NOT EXISTS steam_game_completion (
-            app_id INTEGER PRIMARY KEY,
-            achievements_completed INTEGER NOT NULL,
-            last_played INTEGER NOT NULL,
-            achievement_count INTEGER NOT NULL
-        )",
-        [], // No parameters needed
-    )?;
+    TABLE_CREATE.call_once(|| {
+        if let Err(e) = conn.execute(
+            "CREATE TABLE IF NOT EXISTS steam_game_completion (
+                app_id INTEGER PRIMARY KEY,
+                achievements_completed INTEGER NOT NULL,
+                last_played INTEGER NOT NULL,
+                achievement_count INTEGER NOT NULL
+            )",
+            [], // No parameters needed
+        ){
+            panic!("Table failed to create {}", e);
+        }
+    });
 
     Ok(())
 }

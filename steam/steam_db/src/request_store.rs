@@ -1,4 +1,5 @@
 use rusqlite::{params, Connection, Result};
+use std::sync::Once;
 use jiff::{
     Zoned,
     fmt::temporal::DateTimePrinter,
@@ -93,15 +94,21 @@ pub fn get_count() -> Result<i32> {
     }
 }
 
+static TABLE_CREATE: Once = Once::new();
+
 fn create_table(conn: &Connection) -> Result<()> {
-    conn.execute(
-        "CREATE TABLE IF NOT EXISTS steam_request_count (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            date TEXT NOT NULL,
-            count INTEGER NOT NULL
-        )",
-        [], // No parameters needed
-    )?;
+    TABLE_CREATE.call_once(|| {
+        if let Err(e) = conn.execute(
+            "CREATE TABLE IF NOT EXISTS steam_request_count (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                date TEXT NOT NULL,
+                count INTEGER NOT NULL
+            )",
+            [], // No parameters needed
+        ){
+            panic!("Table failed to create {}", e);
+        }
+    });
 
     Ok(())
 }
