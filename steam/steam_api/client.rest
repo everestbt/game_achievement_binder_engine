@@ -16,3 +16,9 @@ Content-type: application/json
 # @prompt appId
 GET https://api.steampowered.com/ISteamUserStats/GetSchemaForGame/v2/?key={{steamKey}}&appid={{appId}}
 Content-type: application/json
+
+### Store call 
+### Returns names of games, their ids, and the timestamp of their most recent price change
+# @prompt steamKey
+GET https://api.steampowered.com/IStoreService/GetAppList/v1/?key={{steamKey}}&max_results=10
+Content-type: application/json
