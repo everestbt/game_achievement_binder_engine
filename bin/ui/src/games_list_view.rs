@@ -24,12 +24,26 @@ use module::{
 };
 
 #[derive(Debug, Clone, Default, Eq, PartialEq, Hash)]
+pub struct GameListSettings {
+    pub filter: GameListFilter,
+    pub sort: GameListSort,
+    pub has_achievements: bool,
+}
+
+#[derive(Debug, Clone, Default, Eq, PartialEq, Hash)]
 pub enum GameListFilter {
     Targets,
     #[default]
     InProgress,
     Completed,
     Perfected,
+}
+
+#[derive(Debug, Clone, Default, Eq, PartialEq, Hash)]
+pub enum GameListSort {
+    #[default]
+    ProgressDescending,
+    ProgressAscending,
 }
 
 #[derive(Debug, Clone)]
@@ -43,13 +57,12 @@ pub struct GameListDisplay {
 
 #[derive(Debug, Clone)]
 pub struct GameListResult {
-    pub filter: GameListFilter,
-    pub has_achievements: bool,
+    pub settings: GameListSettings,
     pub list: Vec<GameListDisplay>,
 }
 
 impl GameListDisplay {
-    pub async fn list(modules: Vec<Module>, has_achievements: bool, filter: GameListFilter, title_search: Option<String>) -> GameListResult {
+    pub async fn list(modules: Vec<Module>, list_settings: GameListSettings, title_search: Option<String>) -> GameListResult {
         let mut target_set: HashSet<GameIdentifier> = HashSet::new();
         let completion_map = module::get_modules_progress(&modules).expect("Failed to load completion status");
         for m in modules {
@@ -73,7 +86,7 @@ impl GameListDisplay {
                 }
             })
             .filter(|g| {
-                match filter {
+                match list_settings.filter {
                     GameListFilter::Targets => {
                         target_set.contains(&g.identifier)
                     }
@@ -89,7 +102,7 @@ impl GameListDisplay {
                 }
             })
             .filter(|g| {
-                if has_achievements {
+                if list_settings.has_achievements {
                     completion_map.contains_key(&g.identifier)
                 }
                 else {
@@ -98,11 +111,14 @@ impl GameListDisplay {
             })
             .map(|g| (g, completion_map.get(&g.identifier).map(|p| p.progress.get_progress()).unwrap_or(0))) // Game, Progress
             .collect();
-        list.sort_by_key(|a| Reverse(a.1));
+        match list_settings.sort {
+            GameListSort::ProgressAscending => list.sort_by_key(|a| a.1),
+            GameListSort::ProgressDescending => list.sort_by_key(|a| Reverse(a.1)),
+        }
+        
 
         GameListResult {
-            filter,
-            has_achievements,
+            settings: list_settings,
             list: list
                 .par_iter()
                 .map(|g| {
@@ -118,23 +134,32 @@ impl GameListDisplay {
 }
 
 impl App {
-    pub fn game_list_view(&self, filter: GameListFilter) -> Element<'_, Message> {
+    pub fn game_list_view(&self, list_setting: GameListSettings) -> Element<'_, Message> {
+        // Check if game list for selection has loaded
+        let game_list = self.games.get(&list_setting);
+        
         let filter_games = {
             row![
-                button("Targets").on_press(Message::GamesView(GameListFilter::Targets)),
-                button("In progress").on_press(Message::GamesView(GameListFilter::InProgress)),
-                button("Completed").on_press(Message::GamesView(GameListFilter::Completed)),
-                button("Perfected").on_press(Message::GamesView(GameListFilter::Perfected)),
+                button("Targets").on_press(Message::GamesView(GameListSettings { filter: GameListFilter::Targets, sort: list_setting.sort.clone(), has_achievements: list_setting.has_achievements })),
+                button("In progress").on_press(Message::GamesView(GameListSettings { filter: GameListFilter::InProgress, sort: list_setting.sort.clone(), has_achievements: list_setting.has_achievements })),
+                button("Completed").on_press(Message::GamesView(GameListSettings { filter: GameListFilter::Completed, sort: list_setting.sort.clone(), has_achievements: list_setting.has_achievements })),
+                button("Perfected").on_press(Message::GamesView(GameListSettings { filter: GameListFilter::Perfected, sort: list_setting.sort.clone(), has_achievements: list_setting.has_achievements })),
+            ]
+        };
+
+        let order_by = {
+            row![
+                button("Progress Asc").on_press(Message::GamesView(GameListSettings { filter: list_setting.filter.clone(), sort: GameListSort::ProgressAscending, has_achievements: list_setting.has_achievements })),
+                button("Progress Dsc").on_press(Message::GamesView(GameListSettings { filter: list_setting.filter.clone(), sort: GameListSort::ProgressDescending, has_achievements: list_setting.has_achievements })),
             ]
         };
 
         let random_game = button("Random Game").on_press(Message::RandomGame);
-
-        let achievement_filter = checkbox(self.games_have_achievements_filter)
+        
+        let achievement_filter = checkbox(list_setting.has_achievements)
             .label("Has Achievements")
-            .on_toggle(Message::AchievementCheckboxToggled);
-        // Check if game list for selection ahs loaded
-        let game_list = self.games.get(&(filter, self.games_have_achievements_filter));
+            .on_toggle(move |b| Message::GamesView(GameListSettings { filter: list_setting.filter.clone(), sort: list_setting.sort.clone(), has_achievements: b }));
+
         
         let game_count = if let Some(games) = game_list {
             text("Number of games:".to_owned() + games.len().to_string().as_str())
@@ -174,6 +199,7 @@ impl App {
         };
         column![
             center_x(filter_games).padding(5),
+            center_x(order_by).padding(5),
             center_x(achievement_filter).padding(5),
             center_x(random_game).padding(5),
             center_x(game_count).padding(5),

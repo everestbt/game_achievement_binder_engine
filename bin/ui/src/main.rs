@@ -10,7 +10,7 @@ use iced::window::Settings;
 use iced::{Element, Theme, Task};
 use games_list_view::{
     GameListDisplay, 
-    GameListFilter, 
+    GameListSettings, 
     GameListResult
 };
 use goals_view::Goal;
@@ -67,13 +67,12 @@ pub fn main() -> iced::Result {
 
 #[derive(Debug, Clone)]
 enum Message {
-    GamesView(GameListFilter),
+    GamesView(GameListSettings),
     GameView(GameIdentifier), 
     GameLoaded(GameDisplay),
     GoalIconsLoaded(HashMap<(GameIdentifier, String), Handle>), // id, achievement_name -> Image
     GoalsView,
     GoalsLoaded(Vec<Goal>),
-    AchievementCheckboxToggled(bool),
     GamesLoaded(GameListResult),
     GenerateRandomAchievement(GameIdentifier),
     RandomAchievementGenerated(SimpleResult<(Game, Option<GameAchievement>)>), 
@@ -97,7 +96,7 @@ enum View {
     #[default]
     None,
     Goals,
-    Games(GameListFilter),
+    Games(GameListSettings),
     Game(GameIdentifier),
     TrophyCase(TrophyCaseFilter),
 }
@@ -106,8 +105,7 @@ struct App {
     // SETTINGS
     view: View,
     // DISPLAY
-    games: HashMap<(GameListFilter, bool), Vec<GameListDisplay>>, // filter, has_achievement -> game_list
-    games_have_achievements_filter: bool,
+    games: HashMap<GameListSettings, Vec<GameListDisplay>>, // filter, has_achievement -> game_list
     game_list_search: String,
     goals: Option<Vec<Goal>>,
     game_views: HashMap<GameIdentifier, GameDisplay>,
@@ -125,7 +123,6 @@ impl App {
         Self {
             view: View::default(),
             games: HashMap::new(),
-            games_have_achievements_filter: false,
             game_list_search: "".to_string(),
             goals: None,
             game_views: HashMap::new(),
@@ -139,12 +136,12 @@ impl App {
 
     fn update(&mut self, message: Message) -> Task<Message> {
         match message {
-            Message::GamesView(filter) => {
-                self.view = View::Games(filter.clone());
-                Task::perform(GameListDisplay::list(self.modules.clone(), self.games_have_achievements_filter, filter.clone(), Some(self.game_list_search.clone())), Message::GamesLoaded)
+            Message::GamesView(list_settings) => {
+                self.view = View::Games(list_settings.clone());
+                Task::perform(GameListDisplay::list(self.modules.clone(), list_settings.clone(), Some(self.game_list_search.clone())), Message::GamesLoaded)
             },
             Message::GamesLoaded(list_result) => {
-                self.games.insert((list_result.filter, list_result.has_achievements), list_result.list);
+                self.games.insert(list_result.settings, list_result.list);
                 Task::none()
             },
             Message::GameView(id) => {
@@ -192,15 +189,6 @@ impl App {
                 }
                 self.goals = Some(goals);
                 Task::batch(tasks)
-            },
-            Message::AchievementCheckboxToggled(is_checked) => {
-                self.games_have_achievements_filter = is_checked;
-                match &self.view {
-                    View::Games(filter) => {
-                        Task::perform(GameListDisplay::list(self.modules.clone(), self.games_have_achievements_filter, filter.clone(), Some(self.game_list_search.clone())), Message::GamesLoaded)
-                    },
-                    _ => Task::none()
-                }
             },
             Message::GenerateRandomAchievement(ref app_id) => Task::perform(game_view::generate_random_achievement(app_id.clone()), Message::RandomAchievementGenerated),
             Message::RandomAchievementGenerated(random_achievement) => {
@@ -280,7 +268,7 @@ impl App {
                 }
                 let mut tasks: Vec<Task<Message>> = vec![];
                 for k in self.games.keys() {
-                    tasks.push(Task::perform(GameListDisplay::list(self.modules.clone(), k.1, k.0.clone(), Some(self.game_list_search.clone())), Message::GamesLoaded));
+                    tasks.push(Task::perform(GameListDisplay::list(self.modules.clone(), k.clone(), Some(self.game_list_search.clone())), Message::GamesLoaded));
                 }
                 self.trophies = HashMap::new();
                 Task::batch(tasks)
@@ -289,8 +277,8 @@ impl App {
                 self.game_list_search = search.clone();
                 
                 match &self.view {
-                    View::Games(filter) => {
-                        Task::perform(GameListDisplay::list(self.modules.clone(), self.games_have_achievements_filter, filter.clone(), Some(self.game_list_search.clone())), Message::GamesLoaded)
+                    View::Games(list_settings) => {
+                        Task::perform(GameListDisplay::list(self.modules.clone(), list_settings.clone(), Some(self.game_list_search.clone())), Message::GamesLoaded)
                     },
                     _ => Task::none()
                 }
@@ -339,7 +327,7 @@ impl App {
     fn view(&self) -> Element<'_, Message> {
         let view_selector = {
             row![
-                button("Games").on_press(Message::GamesView(GameListFilter::default())),
+                button("Games").on_press(Message::GamesView(GameListSettings::default())),
                 button("Goals").on_press(Message::GoalsView),
                 button("Trophy Case").on_press(Message::TrophyCaseView(TrophyCaseFilter::default())),
             ]
