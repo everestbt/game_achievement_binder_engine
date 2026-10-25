@@ -40,11 +40,11 @@ impl App {
             let achievement_progress: Element<'_, Message> = if let Some(progress) = &self.achievement_progress {
                 match filter {
                     TrophyCaseFilter::Completed => { 
-                        let unlocked_and_excluded = (progress.unlocked_achievements + progress.total_excluded) as f32;
-                        let percent_progress = 100.0 * unlocked_and_excluded / progress.total_achievements as f32;
+                        let total_without_excluded = (progress.total_achievements - progress.total_excluded) as f32;
+                        let percent_progress = 100.0 * (progress.unlocked_achievements as f32) / total_without_excluded;
                         column![
-                            center_x(text(format!("Achievement progress: {done}/{total} ({percent:.2}%)", done = unlocked_and_excluded, total = progress.total_achievements, percent = percent_progress))),
-                            center_x(progress_bar(0.0..=progress.total_achievements as f32, unlocked_and_excluded)),
+                            center_x(text(format!("Achievement progress: {done}/{total} ({percent:.2}%)", done = progress.unlocked_achievements, total = total_without_excluded, percent = percent_progress))),
+                            center_x(progress_bar(0.0..=total_without_excluded, progress.unlocked_achievements as f32)),
                         ].into()
                     },
                     TrophyCaseFilter::Perfected => {
