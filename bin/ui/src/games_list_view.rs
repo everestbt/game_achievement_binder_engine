@@ -75,7 +75,7 @@ impl GameListDisplay {
         }
 
         let owned_games_vec: Vec<&Game> = OWNED_GAMES.values().collect();
-        let mut list: Vec<(&&Game, i8)> = owned_games_vec
+        let mut list: Vec<(&&Game, Option<u8>)> = owned_games_vec
             .par_iter()
             .filter(|g| {
                 if let Some(search) = &title_search {
@@ -109,7 +109,7 @@ impl GameListDisplay {
                     true
                 }
             })
-            .map(|g| (g, completion_map.get(&g.identifier).map(|p| p.progress.get_progress()).unwrap_or(0))) // Game, Progress
+            .map(|g| (g, completion_map.get(&g.identifier).map(|p| p.progress.get_progress()))) // Game, Progress
             .collect();
         match list_settings.sort {
             GameListSort::ProgressAscending => list.sort_by_key(|a| a.1),
@@ -124,7 +124,7 @@ impl GameListDisplay {
                 .map(|g| {
                     GameListDisplay{
                         game_name: g.0.name.clone(),
-                        progress_display: g.1.to_string(),
+                        progress_display: g.1.map(|u| u.to_string()).unwrap_or("-".to_string()),
                         id: g.0.identifier.clone(),
                     }
                 })

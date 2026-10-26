@@ -166,8 +166,8 @@ pub struct AchievementProgress {
 }
 
 impl AchievementProgress {
-    pub fn get_progress(&self) -> i8 {
-        (100.0 * (((self.unlocked + self.excluded) as f32) / (self.total as f32))) as i8
+    pub fn get_progress(&self) -> u8 {
+        (100.0 * (((self.unlocked + self.excluded) as f32) / (self.total as f32))) as u8
     }
 }
 
