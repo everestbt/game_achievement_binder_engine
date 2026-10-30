@@ -129,7 +129,12 @@ impl App {
                             table::column(bold("Description"), |goal: &GameGoalDisplay| text(&goal.description))
                                 .align_x(Left)
                                 .align_y(Center),
-                            table::column(bold("Exclude"), |goal: &GameGoalDisplay| button("Exclude").on_press(Message::ExcludeAchievement(app_id.clone(), goal.achievement_name.clone())))
+                            table::column(bold("Exclude"), |goal: &GameGoalDisplay| {
+                                match goal.goal_state {
+                                    GoalState::Complete => column![text("-")],
+                                    _ => column![button("Exclude").on_press(Message::ExcludeAchievement(app_id.clone(), goal.achievement_name.clone()))]
+                                }
+                            })
                                 .align_x(Left)
                                 .align_y(Center),
                         ];
