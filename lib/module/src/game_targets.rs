@@ -2,7 +2,7 @@ use crate::{
     GameIdentifier, Module
 };
 
-use anyhow::Result;
+use anyhow::{Result, anyhow};
 use steam_db::game_target_store;
 
 pub enum TargetStatus {
@@ -80,4 +80,25 @@ fn mtga_status_to_module_status(target_state: magic_the_gathering_arena_utils::T
         magic_the_gathering_arena_utils::TargetState::COMPLETE => TargetStatus::Complete,
         magic_the_gathering_arena_utils::TargetState::TARGET => TargetStatus::Target,
     }
+}
+
+pub fn can_exclude_games(module: &Module) -> bool {
+    match module {
+        Module::STEAM(_) => true,
+        Module::MTGA => false,
+    }
+}
+
+pub fn exclude_game(game_identifier: &GameIdentifier) -> Result<()> {
+    if !can_exclude_games(&game_identifier.module) {
+        return Err(anyhow!("Can not exclude a game from that module"))
+    }
+    match game_identifier.module {
+        Module::STEAM(_) => {
+            steam_db::excluded_game_store::save_excluded_game(&game_identifier.id.unwrap())?;
+        },
+        Module::MTGA => unreachable!()
+    }
+    
+    Ok(())
 }
