@@ -37,6 +37,7 @@ pub struct GameDisplay {
     pub game_name: String,
     pub target: bool,
     pub complete: bool,
+    pub excluded: bool,
     pub goals: Vec<GameGoalDisplay>,
     // view state
     pub game_cover_edit: bool,
@@ -80,15 +81,47 @@ impl App {
                         }
                     };
                     let random_achievement = button("Random achievement!").on_press(Message::GenerateRandomAchievement(app_id.clone()));
+                    let game_exclude_button = {
+                        if module::game_targets::can_exclude_games(&app_id.module) {
+                            if game.excluded {
+                                Some(button("Remove game exclusion").on_press(Message::RemoveGameExclusion(app_id.clone())))
+                            }
+                            else {
+                                Some(button("Exclude game").on_press(Message::ExcludeGame(app_id.clone())))
+                            }
+                        }  
+                        else {
+                            None
+                        }
+                    };
 
                     let controls: Element<'_, Message> = if let Some(target) = game_target_button {
-                        column![
-                            center_x(target),
-                            center_x(random_achievement),
-                        ].into()
+                        if let Some(exclude) = game_exclude_button {
+                            column![
+                                center_x(target),
+                                center_x(random_achievement),
+                                center_x(exclude),
+                            ].into()
+                        }
+                        else {
+                            column![
+                                center_x(target),
+                                center_x(random_achievement),
+                            ].into()
+                        }
                     }
                     else {
-                        column![random_achievement].into()
+                        if let Some(exclude) = game_exclude_button {
+                            column![
+                                center_x(random_achievement),
+                                center_x(exclude),
+                            ].into()
+                        }
+                        else {
+                            column![
+                                center_x(random_achievement),
+                            ].into()
+                        }
                     };
 
                     let table: Element<'_, Message> = {
@@ -244,12 +277,16 @@ pub async fn load_game_display(id: GameIdentifier, game_name: String) -> GameDis
     goals.sort_by_key(|g| g.goal_state);
     let target = get_game_target_status(&id).expect("Failed to load game target");
     let game_cover_url = get_game_cover_url(&id).expect("Failed to load game cover").unwrap_or("".to_string());
+    let excluded = {
+        module::game_targets::is_game_excluded(&id).expect("Failed to read game exclusion status")
+    };
     GameDisplay { 
         id: id.clone(),
         game_name,
         goals,
         target: target.is_some(),
         complete: target.map(|t| matches!(t, TargetStatus::Complete)).unwrap_or(false),
+        excluded,
         game_cover_edit: false,
         game_cover_url,
     }

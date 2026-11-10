@@ -102,3 +102,26 @@ pub fn exclude_game(game_identifier: &GameIdentifier) -> Result<()> {
     
     Ok(())
 }
+
+pub fn remove_game_exclusion(game_identifier: &GameIdentifier) -> Result<()> {
+    if !can_exclude_games(&game_identifier.module) {
+        return Err(anyhow!("Can not exclude a game from that module"))
+    }
+    match game_identifier.module {
+        Module::STEAM(_) => {
+            steam_db::excluded_game_store::remove_excluded_game(&game_identifier.id.unwrap())?;
+        },
+        Module::MTGA => unreachable!()
+    }
+    
+    Ok(())
+}
+
+pub fn is_game_excluded(game_identifier: &GameIdentifier) -> Result<bool> {
+    match game_identifier.module {
+        Module::STEAM(_) => {
+            Ok(steam_db::excluded_game_store::is_game_excluded(&game_identifier.id.unwrap())?)
+        },
+        Module::MTGA => Ok(false)
+    }
+}

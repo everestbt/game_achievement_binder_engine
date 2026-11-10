@@ -78,6 +78,8 @@ enum Message {
     RandomAchievementGenerated(SimpleResult<(Game, Option<GameAchievement>)>), 
     SetAsGameTarget(GameIdentifier),
     SetGameAsComplete(GameIdentifier),
+    ExcludeGame(GameIdentifier),
+    RemoveGameExclusion(GameIdentifier),
     RandomGame,
     ExcludeAchievement(GameIdentifier, String), // id, achievement_name
     TrophyCaseView(TrophyCaseFilter),
@@ -215,6 +217,20 @@ impl App {
                 save_game_target(&app_id, TargetStatus::Complete).expect("Failed to save target");
                 if let Some(view) = self.game_views.get_mut(&app_id) {
                     view.complete = true;
+                }
+                Task::perform(sync_caches(self.modules.clone()), Message::CachesSynced)
+            },
+            Message::ExcludeGame(game_identifier) => {
+                module::game_targets::exclude_game(&game_identifier).expect("Failed to set exclude game");
+                if let Some(view) = self.game_views.get_mut(&game_identifier) {
+                    view.excluded = true;
+                }
+                Task::perform(sync_caches(self.modules.clone()), Message::CachesSynced)
+            },
+            Message::RemoveGameExclusion(game_identifier) => {
+                module::game_targets::exclude_game(&game_identifier).expect("Failed to set exclude game");
+                if let Some(view) = self.game_views.get_mut(&game_identifier) {
+                    view.excluded = true;
                 }
                 Task::perform(sync_caches(self.modules.clone()), Message::CachesSynced)
             },
