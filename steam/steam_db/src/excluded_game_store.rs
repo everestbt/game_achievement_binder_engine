@@ -6,6 +6,26 @@ struct ExcludedGame {
     app_id : i32
 }
 
+pub fn get_excluded_games() -> Result<Vec<i32>> {
+    // Connect to SQLite database (creates the file if it doesn't exist)
+    let conn: Connection = get_connection();
+    create_table(&conn)?;
+    
+    // Add in the excluded game
+    let mut stmt = conn.prepare("SELECT app_id FROM excluded_steam_games")?;
+    let iter = stmt.query_map([], |row| {
+        Ok(ExcludedGame {
+            app_id: row.get(0)?,
+        })
+    })?;
+
+    let mut ids = vec![];
+    for i in iter {
+        ids.push(i?.app_id);
+    }
+    Ok(ids)
+}
+
 pub fn save_excluded_game(app_id: &i32) -> Result<()> {
     // Connect to SQLite database (creates the file if it doesn't exist)
     let conn: Connection = get_connection();

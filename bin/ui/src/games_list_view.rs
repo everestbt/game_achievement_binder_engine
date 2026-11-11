@@ -64,6 +64,7 @@ pub struct GameListResult {
 impl GameListDisplay {
     pub async fn list(modules: Vec<Module>, list_settings: GameListSettings, title_search: Option<String>) -> GameListResult {
         let mut target_set: HashSet<GameIdentifier> = HashSet::new();
+        let mut excluded_games : HashSet<GameIdentifier>  = HashSet::new();
         let completion_map = module::get_modules_progress(&modules).expect("Failed to load completion status");
         for m in modules {
             get_game_targets(&m).expect("Failed to load targets")
@@ -72,6 +73,7 @@ impl GameListDisplay {
                 .for_each(|t| {
                     target_set.insert(t.game_identifier.clone());
                 });
+            excluded_games.extend(module::game_targets::get_excluded_games(&m).expect("Failed to load excluded games"));
         }
 
         let owned_games_vec: Vec<&Game> = OWNED_GAMES.values().collect();
@@ -91,7 +93,7 @@ impl GameListDisplay {
                         target_set.contains(&g.identifier)
                     }
                     GameListFilter::InProgress => {
-                        !completion_map.get(&g.identifier).map(|c| c.complete).unwrap_or(false) || target_set.contains(&g.identifier)
+                        !excluded_games.contains(&g.identifier) && (!completion_map.get(&g.identifier).map(|c| c.complete).unwrap_or(false) || target_set.contains(&g.identifier))
                     },
                     GameListFilter::Completed => {
                         completion_map.get(&g.identifier).map(|c| c.complete).unwrap_or(false) && !target_set.contains(&g.identifier)

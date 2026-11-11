@@ -125,3 +125,17 @@ pub fn is_game_excluded(game_identifier: &GameIdentifier) -> Result<bool> {
         Module::MTGA => Ok(false)
     }
 }
+
+pub fn get_excluded_games(module: &Module) -> Result<Vec<GameIdentifier>> {
+    match module {
+        Module::STEAM(_) => {
+            Ok(steam_db::excluded_game_store::get_excluded_games()?.iter()
+                .map(|i| GameIdentifier{
+                    id: Some(*i),
+                    module: module.clone(),
+                })
+                .collect())
+        },
+        Module::MTGA => Ok(vec![])
+    }
+}
