@@ -90,16 +90,16 @@ impl GameListDisplay {
             .filter(|g| {
                 match list_settings.filter {
                     GameListFilter::Targets => {
-                        target_set.contains(&g.identifier)
+                        !excluded_games.contains(&g.identifier) && target_set.contains(&g.identifier)
                     }
                     GameListFilter::InProgress => {
                         !excluded_games.contains(&g.identifier) && (!completion_map.get(&g.identifier).map(|c| c.complete).unwrap_or(false) || target_set.contains(&g.identifier))
                     },
                     GameListFilter::Completed => {
-                        completion_map.get(&g.identifier).map(|c| c.complete).unwrap_or(false) && !target_set.contains(&g.identifier)
+                        !excluded_games.contains(&g.identifier) && completion_map.get(&g.identifier).map(|c| c.complete).unwrap_or(false) && !target_set.contains(&g.identifier)
                     },
                     GameListFilter::Perfected => {
-                        completion_map.get(&g.identifier).map(|c| c.perfect).unwrap_or(false) && !target_set.contains(&g.identifier)
+                        !excluded_games.contains(&g.identifier) && completion_map.get(&g.identifier).map(|c| c.perfect).unwrap_or(false) && !target_set.contains(&g.identifier)
                     }
                 }
             })
