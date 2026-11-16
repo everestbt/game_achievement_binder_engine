@@ -9,7 +9,7 @@ pub async fn get_game_cover(app_id: &i32) -> Result<Bytes> {
     else {
         "https://shared.steamstatic.com/store_item_assets/steam/apps/".to_owned() + &app_id.to_string() + "/library_600x900_2x.jpg"
     };
-    let req = reqwest::get(url).await.and_then(|r| r.error_for_status()).and_then(|r| Ok(r.bytes()));
+    let req = reqwest::get(url).await.and_then(|r| r.error_for_status()).map(|r| r.bytes());
     Ok(req?.await?)
 }
 
