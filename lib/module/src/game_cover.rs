@@ -15,7 +15,7 @@ pub async fn load_game_cover(game_identifier: &GameIdentifier) -> Result<Bytes> 
         },
         Module::MTGA => {
             let url = magic_the_gathering_arena_utils::get_game_cover_url()?.unwrap_or(magic_the_gathering_arena_utils::GAME_COVER_URL.to_string());
-            let req = reqwest::get(url).await.and_then(|r| r.error_for_status()).and_then(|r| Ok(r.bytes()));
+            let req = reqwest::get(url).await.and_then(|r| r.error_for_status()).map(|r| r.bytes());
             Ok(req?.await?)
         }
     }

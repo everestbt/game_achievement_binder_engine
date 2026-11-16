@@ -94,7 +94,7 @@ pub fn get_modules() -> Result<Vec<Module>> {
         let crendentials = SteamCredentials{key, steam_id: id.clone()};
         modules.push(Module::STEAM(crendentials));
     }
-    if let Some(_) = settings.get(MTGA_KEY) {
+    if settings.contains_key(MTGA_KEY) {
         modules.push(Module::MTGA);
     }
     Ok(modules)
@@ -179,8 +179,8 @@ pub fn get_modules_progress(modules: &Vec<Module>) -> Result<HashMap<GameIdentif
                 let completetion = goals::get_game_completion();
                 let progress = goals::get_game_progress();
                 for k in completetion.keys() {
-                    let complete_val = completetion.get(&k);
-                    let progress_val = progress.get(&k);
+                    let complete_val = completetion.get(k);
+                    let progress_val = progress.get(k);
                     map.insert(GameIdentifier { module: m.clone(), id: Some(*k) }, GameCompletionStatus { 
                         complete: complete_val.map(|c| c.complete).unwrap_or(false), 
                         perfect: complete_val.map(|c| c.perfect).unwrap_or(false), 
@@ -194,10 +194,10 @@ pub fn get_modules_progress(modules: &Vec<Module>) -> Result<HashMap<GameIdentif
                         } });
                 }
                 for k in progress.keys() {
-                    if !map.contains_key(&GameIdentifier { module: m.clone(), id: Some(*k) }) {
+                    map.entry(GameIdentifier { module: m.clone(), id: Some(*k) }).or_insert_with(|| {
                         let complete_val = completetion.get(k);
                         let progress_val = progress.get(k);
-                        map.insert(GameIdentifier { module: m.clone(), id: Some(*k) }, GameCompletionStatus { 
+                        GameCompletionStatus { 
                             complete: complete_val.map(|c| c.complete).unwrap_or(false), 
                             perfect: complete_val.map(|c| c.perfect).unwrap_or(false), 
                             progress: {
@@ -207,8 +207,8 @@ pub fn get_modules_progress(modules: &Vec<Module>) -> Result<HashMap<GameIdentif
                                 else {
                                     AchievementProgress::default()
                                 }
-                            } });
-                    }
+                            } }
+                    });
                 }
             },
             Module::MTGA => {
@@ -219,7 +219,7 @@ pub fn get_modules_progress(modules: &Vec<Module>) -> Result<HashMap<GameIdentif
                 map.insert(
                     GameIdentifier { module: m.clone(), id: None }, 
                     GameCompletionStatus { 
-                        complete: complete, 
+                        complete, 
                         perfect: complete, 
                         progress: AchievementProgress { 
                             total: achievements.len() as u32, 

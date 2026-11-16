@@ -15,7 +15,7 @@ pub fn get_game_target_status(game_identifier: &GameIdentifier) -> Result<Option
         Module::STEAM(_) => {
             Ok(game_target_store::get_game_target(&game_identifier.id.expect("Steam must always have an ID"))?.map(|t| steam_status_to_module_status(&t.complete)))
         },
-        Module::MTGA => Ok(magic_the_gathering_arena_utils::get_target_state()?.map(|t| mtga_status_to_module_status(t))),
+        Module::MTGA => Ok(magic_the_gathering_arena_utils::get_target_state()?.map(mtga_status_to_module_status)),
     }
 }
 
