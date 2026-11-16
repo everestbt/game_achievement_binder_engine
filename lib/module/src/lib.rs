@@ -195,8 +195,8 @@ pub fn get_modules_progress(modules: &Vec<Module>) -> Result<HashMap<GameIdentif
                 }
                 for k in progress.keys() {
                     if !map.contains_key(&GameIdentifier { module: m.clone(), id: Some(*k) }) {
-                        let complete_val = completetion.get(&k);
-                        let progress_val = progress.get(&k);
+                        let complete_val = completetion.get(k);
+                        let progress_val = progress.get(k);
                         map.insert(GameIdentifier { module: m.clone(), id: Some(*k) }, GameCompletionStatus { 
                             complete: complete_val.map(|c| c.complete).unwrap_or(false), 
                             perfect: complete_val.map(|c| c.perfect).unwrap_or(false), 

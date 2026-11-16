@@ -189,10 +189,8 @@ async fn main() -> Result<()> {
         && args.purge.is_some_and(|f| f == "completed_games") {
             game_completion_cache::drop_table().expect("Failed to drop table");
     }
-    else if let Some(module_enable) = args.enable_module {
-        if module_enable == "MTGA" {
-            enable_module(ModuleEnable::MTGA).expect("failed to enable MTGA module");
-        }
+    else if let Some(module_enable) = args.enable_module && module_enable == "MTGA" {
+        enable_module(ModuleEnable::MTGA).expect("failed to enable MTGA module");
     }
 
     if args.debug {

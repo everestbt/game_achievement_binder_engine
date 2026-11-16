@@ -2636,7 +2636,6 @@ dependencies = [
  "convert_case",
  "directories",
  "jiff",
- "serde",
  "serde_json",
 ]
 
@@ -4583,7 +4582,6 @@ dependencies = [
  "reqwest",
  "serde",
  "serde_json",
- "simple-error",
  "steam_db",
  "temp-env",
  "tokio",
@@ -4593,7 +4591,6 @@ dependencies = [
 name = "steam_db"
 version = "0.0.0"
 dependencies = [
- "anyhow",
  "db_lib",
  "jiff",
  "rusqlite",
