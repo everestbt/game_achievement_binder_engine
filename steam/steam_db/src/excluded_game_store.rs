@@ -1,12 +1,12 @@
 use rusqlite::{params, Connection, Result};
-use std::sync::Once;
+use std::{collections::HashSet, sync::Once};
 use db_lib::get_connection;
 
 struct ExcludedGame {
     app_id : i32
 }
 
-pub fn get_excluded_games() -> Result<Vec<i32>> {
+pub fn get_excluded_games() -> Result<HashSet<i32>> {
     // Connect to SQLite database (creates the file if it doesn't exist)
     let conn: Connection = get_connection();
     create_table(&conn)?;
@@ -19,9 +19,9 @@ pub fn get_excluded_games() -> Result<Vec<i32>> {
         })
     })?;
 
-    let mut ids = vec![];
+    let mut ids = HashSet::new();
     for i in iter {
-        ids.push(i?.app_id);
+        ids.insert(i?.app_id);
     }
     Ok(ids)
 }

@@ -21,7 +21,8 @@ use std::sync::LazyLock;
 use game_view::{GameDisplay, GameGoalDisplay};
 use trophy_case_view::{
     TrophyCaseFilter, 
-    TotalAchievementProgress
+    TotalAchievementProgress,
+    TrophySet,
 };
 use module::{
     Game, 
@@ -83,7 +84,7 @@ enum Message {
     RandomGame,
     ExcludeAchievement(GameIdentifier, String), // id, achievement_name
     TrophyCaseView(TrophyCaseFilter),
-    TrophiesLoaded((TrophyCaseFilter, Vec<GameIdentifier>)),
+    TrophiesLoaded((TrophyCaseFilter, TrophySet)),
     AchievementProgressLoaded(TotalAchievementProgress),
     GameCoversLoaded(HashMap<GameIdentifier, Handle>), // id -> Game Cover
     CachesSynced(SimpleResult<()>),
@@ -112,7 +113,7 @@ struct App {
     goals: Option<Vec<Goal>>,
     game_views: HashMap<GameIdentifier, GameDisplay>,
     goal_icons: HashMap<(GameIdentifier, String), Handle>, // id, achievement_name -> image
-    trophies: HashMap<TrophyCaseFilter, Vec<GameIdentifier>>,
+    trophies: HashMap<TrophyCaseFilter, TrophySet>,
     achievement_progress: Option<TotalAchievementProgress>,
     game_covers: HashMap<GameIdentifier, Handle>, // id -> image
     // DATA
@@ -256,7 +257,7 @@ impl App {
                 Task::batch(tasks)
             },
             Message::TrophiesLoaded((filter, trophies)) => {
-                let filtered_covers: Vec<GameIdentifier> = trophies.iter()
+                let filtered_covers: Vec<GameIdentifier> = trophies.games.iter()
                     .filter(|app_id| !self.game_covers.contains_key(app_id))
                     .cloned()
                     .collect();

@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use crate::{
     GameIdentifier, Module
 };
@@ -126,7 +128,7 @@ pub fn is_game_excluded(game_identifier: &GameIdentifier) -> Result<bool> {
     }
 }
 
-pub fn get_excluded_games(module: &Module) -> Result<Vec<GameIdentifier>> {
+pub fn get_excluded_games(module: &Module) -> Result<HashSet<GameIdentifier>> {
     match module {
         Module::STEAM(_) => {
             Ok(steam_db::excluded_game_store::get_excluded_games()?.iter()
@@ -136,6 +138,6 @@ pub fn get_excluded_games(module: &Module) -> Result<Vec<GameIdentifier>> {
                 })
                 .collect())
         },
-        Module::MTGA => Ok(vec![])
+        Module::MTGA => Ok(HashSet::new())
     }
 }

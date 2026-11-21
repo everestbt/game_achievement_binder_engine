@@ -155,6 +155,7 @@ pub async fn sync_caches(modules: Vec<Module>) -> SimpleResult<()> {
 pub struct GameCompletionStatus {
     pub complete: bool,
     pub perfect: bool,
+    pub excluded: bool,
     pub progress: AchievementProgress,
 }
 
@@ -174,6 +175,7 @@ impl AchievementProgress {
 pub fn get_modules_progress(modules: &Vec<Module>) -> Result<HashMap<GameIdentifier, GameCompletionStatus>> {
     let mut map = HashMap::new();
     for m in modules {
+        let excluded_games = game_targets::get_excluded_games(m)?;
         match m {
             Module::STEAM(_) => {
                 let completetion = goals::get_game_completion();
@@ -181,9 +183,12 @@ pub fn get_modules_progress(modules: &Vec<Module>) -> Result<HashMap<GameIdentif
                 for k in completetion.keys() {
                     let complete_val = completetion.get(k);
                     let progress_val = progress.get(k);
-                    map.insert(GameIdentifier { module: m.clone(), id: Some(*k) }, GameCompletionStatus { 
+                    let game_identifier = GameIdentifier { module: m.clone(), id: Some(*k) };
+                    let is_excluded = excluded_games.contains(&game_identifier);
+                    map.insert(game_identifier, GameCompletionStatus { 
                         complete: complete_val.map(|c| c.complete).unwrap_or(false), 
                         perfect: complete_val.map(|c| c.perfect).unwrap_or(false), 
+                        excluded: is_excluded,
                         progress: {
                             if let Some(p) = progress_val {
                                 AchievementProgress { total: p.total, unlocked: p.unlocked, excluded: p.excluded }
@@ -191,15 +196,19 @@ pub fn get_modules_progress(modules: &Vec<Module>) -> Result<HashMap<GameIdentif
                             else {
                                 AchievementProgress::default()
                             }
-                        } });
+                        } 
+                    });
                 }
                 for k in progress.keys() {
-                    map.entry(GameIdentifier { module: m.clone(), id: Some(*k) }).or_insert_with(|| {
+                    let game_identifier = GameIdentifier { module: m.clone(), id: Some(*k) };
+                    let is_excluded = excluded_games.contains(&game_identifier);
+                    map.entry(game_identifier).or_insert_with(|| {
                         let complete_val = completetion.get(k);
                         let progress_val = progress.get(k);
                         GameCompletionStatus { 
                             complete: complete_val.map(|c| c.complete).unwrap_or(false), 
                             perfect: complete_val.map(|c| c.perfect).unwrap_or(false), 
+                            excluded: is_excluded,
                             progress: {
                                 if let Some(p) = progress_val {
                                     AchievementProgress { total: p.total, unlocked: p.unlocked, excluded: p.excluded }
@@ -207,7 +216,8 @@ pub fn get_modules_progress(modules: &Vec<Module>) -> Result<HashMap<GameIdentif
                                 else {
                                     AchievementProgress::default()
                                 }
-                            } }
+                            } 
+                        }
                     });
                 }
             },
@@ -216,11 +226,14 @@ pub fn get_modules_progress(modules: &Vec<Module>) -> Result<HashMap<GameIdentif
                 let complete = achievements.iter().find(|a| !a.achieved).is_none();
                 let achieved = achievements.iter().filter(|a| a.achieved).count();
                 let excluded = magic_the_gathering_arena_utils::get_excluded_achievements()?.len();
+                let game_identifier = GameIdentifier { module: m.clone(), id: None };
+                let is_excluded = excluded_games.contains(&game_identifier);
                 map.insert(
-                    GameIdentifier { module: m.clone(), id: None }, 
+                    game_identifier, 
                     GameCompletionStatus { 
                         complete, 
                         perfect: complete, 
+                        excluded: is_excluded,
                         progress: AchievementProgress { 
                             total: achievements.len() as u32, 
                             unlocked: achieved as u32, 

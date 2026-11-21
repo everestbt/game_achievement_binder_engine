@@ -14,6 +14,11 @@ use module::{
     game_cover::load_game_cover,
 };
 
+#[derive(Debug, Clone)]
+pub struct TrophySet {
+    pub games: Vec<GameIdentifier>,
+    pub excluded_game_count: u32,
+}
 
 impl App {
     pub fn trophy_case_view(&self) -> Element<'_, Message> {
@@ -31,10 +36,11 @@ impl App {
 
         if let Some(trophies) = self.trophies.get(filter) {
             let game_progress: Element<'_, Message> = {
-                let percent_progress = 100.0 * trophies.len() as f32 / OWNED_GAMES.len() as f32;
+                let adjusted_total = OWNED_GAMES.len() as f32 - trophies.excluded_game_count as f32;
+                let percent_progress = 100.0 * trophies.games.len() as f32 / adjusted_total;
                 column![
-                    center_x(text(format!("Game progress: {done}/{total} ({percent:.2}%)", done = trophies.len(), total = OWNED_GAMES.len(), percent = percent_progress))),
-                    center_x(progress_bar(0.0..=OWNED_GAMES.len() as f32, trophies.len() as f32)),
+                    center_x(text(format!("Game progress: {done}/{total} ({percent:.2}%)", done = trophies.games.len(), total = adjusted_total, percent = percent_progress))),
+                    center_x(progress_bar(0.0..=adjusted_total, trophies.games.len() as f32)),
                 ].into()
             };
             let achievement_progress: Element<'_, Message> = if let Some(progress) = &self.achievement_progress {
@@ -61,7 +67,7 @@ impl App {
             };
 
             // Grid of game trophies
-            let panes = trophies.iter().map(|app_id| {
+            let panes = trophies.games.iter().map(|app_id| {
                 if let Some(i) =  self.game_covers.get(app_id) {
                     image(i).width(150).height(225).into()
                 }
@@ -92,8 +98,8 @@ pub enum TrophyCaseFilter {
     Perfected,
 }
 
-pub async fn load_trophies(modules: Vec<Module>, view: TrophyCaseFilter) -> (TrophyCaseFilter, Vec<GameIdentifier>) {
-    let vec = module::get_modules_progress(&modules).expect("Failed to read progress")
+pub async fn load_trophies(modules: Vec<Module>, view: TrophyCaseFilter) -> (TrophyCaseFilter, TrophySet) {
+    let games = module::get_modules_progress(&modules).expect("Failed to read progress")
         .iter()
         .filter(|c| {
             match view {
@@ -103,7 +109,14 @@ pub async fn load_trophies(modules: Vec<Module>, view: TrophyCaseFilter) -> (Tro
         }) 
         .map(|c| c.0.clone())
         .collect();
-    (view.clone(), vec)
+    let mut excluded_game_count = 0;
+    for m in modules {
+        excluded_game_count += module::game_targets::get_excluded_games(&m).expect("Failed to read excluded games").len() as u32;
+    }
+    (view.clone(), TrophySet {
+        games,
+        excluded_game_count,
+    })
 }
 
 #[derive(Debug, Clone)]
@@ -120,7 +133,12 @@ pub async fn load_achievement_progress(modules: Vec<Module>) -> TotalAchievement
     for g in module::get_modules_progress(&modules).expect("Failed to load progress") {
         total_achievements += g.1.progress.total;
         unlocked_achievements += g.1.progress.unlocked;
-        total_excluded += g.1.progress.excluded;
+        if g.1.excluded {
+            total_excluded += g.1.progress.total
+        }
+        else {
+            total_excluded += g.1.progress.excluded;
+        }
     }
     TotalAchievementProgress {
         total_achievements,
